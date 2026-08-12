@@ -1,24 +1,19 @@
 {{ define "main" }}
 
-<section class="intro">
-    <h1>{{ site.Title }}</h1>
+<section class="hero">
+    <h1 class="hero-title">{{ site.Title }}</h1>
 
     {{ with .Content }}
-        <div class="content">
+        <div class="hero-intro content">
             {{ . }}
         </div>
     {{ end }}
 </section>
 
-<section>
-    <h2>Explore</h2>
-
-    <div class="links">
-        {{ range site.Sections }}
-            <a href="{{ .RelPermalink }}">
-                <strong>{{ .Title }}</strong>
-                <span>{{ .Summary }}</span>
-            </a>
+<section class="routes" aria-label="Ways to explore the site">
+    <div class="route-grid">
+        {{ range site.Params.routes }}
+            {{ partial "route-card.html" . }}
         {{ end }}
     </div>
 </section>

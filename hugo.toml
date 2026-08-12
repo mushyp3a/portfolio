@@ -3,7 +3,27 @@ languageCode = "en-gb"
 title = "Mackenzie Trafford"
 
 [params]
-  description = "The personal website of Mackenzie Trafford — photography, projects and things I find interesting."
+  # description = "The personal website of Mackenzie Trafford — photography, projects and things I find interesting."
+  # tagline = "Computing science student in Glasgow, building thoughtful software, photography and experiments."
+
+  # Landing-page route cards. Edit here and they update everywhere on rebuild.
+  [[params.routes]]
+    tag = ""
+    title = "Photography"
+    subtitle = "I take photos sometimes."
+    url = "/photography/"
+
+  [[params.routes]]
+    tag = ""
+    title = "Projects & Builds"
+    subtitle = "Software, self-hosted infrastructure and experiments."
+    url = "/projects/"
+
+  [[params.routes]]
+    tag = ""
+    title = "About Me"
+    subtitle = "A bit about me, and how to get in touch."
+    url = "/about/"
 
 # Disable the default tags/categories taxonomies; nothing in the site uses them.
 # Re-enable here if you start tagging content.

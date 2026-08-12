@@ -1,131 +1,223 @@
 :root {
-    font-family: system-ui, sans-serif;
-    line-height: 1.6;
-    color: #222;
-    background: #fff;
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #fabd2f;
+    --accent-hover: #d79921;
+    --radius: 16px;
+    --max: 1000px;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px rgba(0, 0, 0, .06);
+    --shadow-hover: 0 4px 8px rgba(0, 0, 0, .06), 0 16px 40px rgba(0, 0, 0, .10);
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 * {
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    margin: 0;
+    font-family: var(--font);
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
 }
 
 a {
     color: inherit;
 }
 
+/* ---------- Header / nav (inherited on every page) ---------- */
+
 .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    padding: 2rem 0;
-    border-bottom: 1px solid #ddd;
-    gap: 2rem;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1.25rem max(1.5rem, calc((100vw - var(--max)) / 2));
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    backdrop-filter: saturate(180%) blur(10px);
+    border-bottom: 1px solid var(--border);
 }
 
 .site-title {
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
     text-decoration: none;
 }
 
-nav {
+.site-header nav {
     display: flex;
-    gap: 1.25rem;
+    gap: 1.5rem;
     flex-wrap: wrap;
 }
 
-nav a {
+.site-header nav a {
     text-decoration: none;
+    color: var(--muted);
+    font-weight: 500;
+    transition: color .15s ease;
 }
 
-nav a:hover {
-    text-decoration: underline;
+.site-header nav a:hover {
+    color: var(--text);
 }
 
 .site-main {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 4rem 1.5rem 5rem;
     min-height: 70vh;
-    padding: 4rem 0;
 }
 
 .site-footer {
-    padding: 2rem 0;
-    border-top: 1px solid #ddd;
-    color: #666;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: .9rem;
 }
 
-.intro {
-    max-width: 650px;
-    margin-bottom: 5rem;
+/* ---------- Landing: hero ---------- */
+
+.hero {
+    max-width: 720px;
+    margin-bottom: 4rem;
 }
 
-.intro h1 {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
+.hero-title {
+    font-size: clamp(2.6rem, 7vw, 4.5rem);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    margin: 0 0 1rem;
 }
 
-.links {
+.hero-tagline {
+    font-size: clamp(1.1rem, 2.6vw, 1.4rem);
+    color: var(--muted);
+    margin: 0;
+    max-width: 36ch;
+}
+
+.hero-intro {
+    margin-top: 1.75rem;
+    color: var(--muted);
+    max-width: 60ch;
+}
+
+/* ---------- Landing: route cards ---------- */
+
+.route-grid {
     display: grid;
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
 }
 
-.links a {
-    display: block;
-    padding: 1.25rem;
-    border: 1px solid #ddd;
+.route-card {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    padding: 1.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow);
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
 
-.links a:hover {
-    border-color: #888;
+.route-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-hover);
 }
 
-.links strong,
-.links span {
-    display: block;
+.route-tag {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--accent);
 }
 
-.links span {
-    margin-top: 0.25rem;
-    color: #666;
+.route-title {
+    font-size: 1.35rem;
+    margin: 0;
+    letter-spacing: -0.01em;
 }
+
+.route-subtitle {
+    margin: 0;
+    color: var(--muted);
+    flex: 1;
+}
+
+.route-cta {
+    margin-top: .5rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.route-card:hover .route-cta {
+    color: var(--accent-hover);
+}
+
+/* ---------- Inner pages: list & single ---------- */
 
 .page {
-    max-width: 700px;
+    max-width: 720px;
 }
 
-.page header {
-    margin-bottom: 3rem;
+.page > header {
+    margin-bottom: 2.5rem;
 }
 
 .page h1 {
-    font-size: 2.5rem;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 .5rem;
 }
 
 .meta {
-    color: #777;
-}
-
-.content img {
-    max-width: 100%;
-    height: auto;
+    color: var(--muted);
+    font-size: .9rem;
+    margin: 0;
 }
 
 .listing {
-    margin-top: 3rem;
+    margin-top: 1rem;
+    display: grid;
+    gap: 0;
 }
 
 .listing-item {
     padding: 1.5rem 0;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--border);
+    transition: padding-left .15s ease;
+}
+
+.listing-item:hover {
+    padding-left: .5rem;
 }
 
 .listing-item h2 {
     margin: 0;
+    font-size: 1.25rem;
 }
 
 .listing-item h2 a {
@@ -136,6 +228,25 @@ nav a:hover {
     text-decoration: underline;
 }
 
+.listing-item p {
+    margin: .4rem 0 0;
+    color: var(--muted);
+}
+
+/* ---------- Prose ---------- */
+
+.content {
+    max-width: 68ch;
+}
+
+.content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+}
+
+/* ---------- Responsive ---------- */
+
 @media (max-width: 600px) {
     .site-header {
         align-items: flex-start;
@@ -143,10 +254,21 @@ nav a:hover {
     }
 
     .site-main {
-        padding: 2.5rem 0;
+        padding-top: 2.5rem;
     }
 
-    .intro h1 {
-        font-size: 2.25rem;
+    .hero {
+        margin-bottom: 3rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
+
+    .route-card:hover {
+        transform: none;
     }
 }
