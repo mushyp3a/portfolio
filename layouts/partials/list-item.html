@@ -1,0 +1,11 @@
+<article class="listing-item">
+    <h2>
+        <a href="{{ .RelPermalink }}">
+            {{ .Title }}
+        </a>
+    </h2>
+
+    {{ with .Summary }}
+        <p>{{ . }}</p>
+    {{ end }}
+</article>

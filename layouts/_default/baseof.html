@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>
+        {{ if .Title }}
+            {{ .Title }} · {{ site.Title }}
+        {{ else }}
+            {{ site.Title }}
+        {{ end }}
+    </title>
+
+    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+
+    {{ $css := resources.Get "css/main.css" }}
+    <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+</head>
+
+<body>
+
+<header class="site-header">
+    <a class="site-title" href="{{ "/" | relURL }}">
+        {{ site.Title }}
+    </a>
+
+    {{ partial "nav.html" . }}
+</header>
+
+<main class="site-main">
+    {{ block "main" . }}{{ end }}
+</main>
+
+<footer class="site-footer">
+    <p>© {{ now.Year }} {{ site.Title }}</p>
+</footer>
+
+</body>
+</html>

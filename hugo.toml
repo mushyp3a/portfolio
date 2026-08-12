@@ -1,0 +1,27 @@
+baseURL = "http://localhost:1313/"
+languageCode = "en-gb"
+title = "Mackenzie Trafford"
+
+[params]
+  description = "The personal website of Mackenzie Trafford — photography, projects and things I find interesting."
+
+# Disable the default tags/categories taxonomies; nothing in the site uses them.
+# Re-enable here if you start tagging content.
+[taxonomies]
+
+[menu]
+
+  [[menu.main]]
+    name = "Photography"
+    pageRef = "/photography"
+    weight = 10
+
+  [[menu.main]]
+    name = "Projects"
+    pageRef = "/projects"
+    weight = 20
+
+  [[menu.main]]
+    name = "About"
+    pageRef = "/about"
+    weight = 30
