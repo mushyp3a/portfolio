@@ -3,10 +3,34 @@ languageCode = "en-gb"
 title = "Mackenzie Trafford"
 
 [params]
-  description = "The personal website of Mackenzie Trafford — photography, projects and things I find interesting."
+  # description for search/social previews
+  tagline = ""
 
-# Disable the default tags/categories taxonomies; nothing in the site uses them.
-# Re-enable here if you start tagging content.
+  # homepage route cards
+  [[params.routes]]
+    tag = ""
+    title = "Photography"
+    subtitle = "I take photos sometimes."
+    url = "/photography/"
+
+  [[params.routes]]
+    tag = ""
+    title = "Projects & Builds"
+    subtitle = "Ocassionally noteworthy projects."
+    url = "/projects/"
+
+  [[params.routes]]
+    tag = ""
+    title = "About Me"
+    subtitle = "A bit about me, and how to get in touch."
+    url = "/about/"
+
+  # social links
+  [[params.social]]
+    name = "GitHub"
+    url = "https://github.com/mushyp3a"
+    rel = true
+
 [taxonomies]
 
 [menu]
