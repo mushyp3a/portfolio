@@ -6,6 +6,10 @@ on:
   push:
     branches: ["master"]
 
+  # Refreshes Immich photos automatically once a day (UTC)
+  schedule:
+    - cron: "13 6 * * *"
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
