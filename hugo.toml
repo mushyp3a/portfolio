@@ -12,14 +12,22 @@ title = "Mackenzie Trafford"
   # client JavaScript. See scripts/import-immich.py for the full flow used by
   # the scheduled GitHub Action.
   immichBaseURL = "https://img.mushypea.win/assets/{id}/thumbnail"
-  # Full-resolution variant, used on the single-photo page. The proxy must
-  # allow the "original" segment (see proxy/Caddyfile.example / NPM snippet).
+  # Immich media tiers. The size is a QUERY param on the /thumbnail endpoint
+  # (Immich's own API: /thumbnail?size=preview|fullsize). The proxy MUST forward
+  # the query string for these to work — currently it is being stripped, so the
+  # grid falls back to the 256px thumbnail. See notes below / proxy config.
+  #   thumbnail -> 256px (lightest)         preview  -> ~1440px (default grid)
+  #   fullsize  -> full-res web JPEG        original -> raw/file (lightbox)
+  immichPreviewURL = "https://img.mushypea.win/assets/{id}/thumbnail?size=preview"
+  immichFullsizeURL = "https://img.mushypea.win/assets/{id}/thumbnail?size=fullsize"
+  # Full-resolution variant, used on the single-photo page and the lightbox.
+  # The proxy must allow the "original" segment (see proxy/Caddyfile.example).
   immichOriginalURL = "https://img.mushypea.win/assets/{id}/original"
 
   # Image quality for the gallery grid.
-  #   false (default) -> grid uses thumbnails, popup/lightbox uses originals.
-  #   true            -> grid uses full-resolution originals too (heavier load).
-  immichUseOriginal = true
+  #   false (default) -> grid uses the "preview" tier, popup/lightbox use originals.
+  #   true            -> grid uses full-resolution originals too (heaviest load).
+  immichUseOriginal = false
 
   # homepage route cards
   [[params.routes]]

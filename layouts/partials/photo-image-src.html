@@ -1,17 +1,24 @@
- {{- /*
-   Returns ONLY the resolved image URL for a photograph (no <img> tag), so the
-   lightbox can drop it into its own markup. Resolution rules are identical to
-   photo-image.html — Immich takes precedence over the (now unused) placeholder.
-   Whitespace is trimmed so the result is a clean URL string.
+  {{- /*
+    Returns ONLY the resolved image URL for a photograph (no <img> tag), so the
+    lightbox can drop it into its own markup. Resolution rules are identical to
+    photo-image.html — Immich takes precedence over the (now unused) placeholder.
+    Whitespace is trimmed so the result is a clean URL string.
 
-   Quality: "original" uses immichOriginalURL, anything else uses immichBaseURL
-   (the thumbnail endpoint). Set site param immichUseOriginal = true to upgrade
-   the gallery grid to originals as well (the lightbox always uses originals).
- */ -}}
-{{- $quality := .quality | default "thumbnail" -}}
-{{- if site.Params.immichUseOriginal }}{{ $quality = "original" }}{{ end -}}
-{{- $base := site.Params.immichBaseURL -}}
-{{- with site.Params.immichOriginalURL }}{{ if eq $quality "original" }}{{ $base = . }}{{ end }}{{ end -}}
+    Quality tiers (lowest to highest):
+      thumbnail -> immichBaseURL        (256px, lightest)
+      preview   -> immichPreviewURL     (~1440p, light)
+      fullsize  -> immichFullsizeURL    (DEFAULT: full-res web JPEG, sharp)
+      original  -> immichOriginalURL    (raw/file; lightbox + single page)
+
+    site param immichUseOriginal = true forces the grid to originals too
+    (heaviest load). The lightbox always requests "original" explicitly.
+  */ -}}
+ {{- $quality := .quality | default "preview" -}}
+ {{- if site.Params.immichUseOriginal }}{{ $quality = "original" }}{{ end -}}
+ {{- $base := site.Params.immichBaseURL -}}
+ {{- with site.Params.immichPreviewURL }}{{ if eq $quality "preview" }}{{ $base = . }}{{ end }}{{ end -}}
+ {{- with site.Params.immichFullsizeURL }}{{ if eq $quality "fullsize" }}{{ $base = . }}{{ end }}{{ end -}}
+ {{- with site.Params.immichOriginalURL }}{{ if eq $quality "original" }}{{ $base = . }}{{ end }}{{ end -}}
 {{- $id := .page.Params.immichId -}}
 {{- $src := .page.Params.image | default "" -}}
 {{- if and $id $base }}{{ $src = replace $base "{id}" $id }}{{ end -}}

@@ -15,6 +15,9 @@
 #   server {
 #     listen 443 ssl; server_name img.example.com;
 #     location ~ ^/assets/([^/]+)/(thumbnail|original)$ {
+#       # proxy_pass must forward the query string (?size=preview|fullsize)
+#       # so Immich receives the requested size. With a literal URI in
+#       # proxy_pass, nginx appends the original args automatically.
 #       proxy_pass http://immich:2283/api/assets/$1/$2;
 #       proxy_set_header x-api-key $IMMICH_API_KEY;
 #       proxy_set_header Authorization "";
@@ -24,6 +27,9 @@
 
 img.example.com {
     # Match only asset thumbnail/original requests; block everything else.
+    # NOTE: preview/fullsize are requested as /thumbnail?size=preview (query
+    # param), so the path is always /thumbnail or /original. The proxy MUST
+    # forward the query string for the ?size= variants to reach Immich.
     @asset path_regexp asset `^/assets/([^/]+)/(thumbnail|original)$`
 
     # Rewrite /assets/<id>/<kind> -> Immich's /api/assets/<id>/<kind>
