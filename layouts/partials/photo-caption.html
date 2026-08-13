@@ -1,9 +1,7 @@
 <figcaption class="photo-caption">
     <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
-    {{ $cam := .Params.camera }}{{ $lens := .Params.lens }}
-    {{ if or $cam $lens }}<span class="photo-meta">{{ $cam }}{{ with $lens }}{{ if $cam }} &middot; {{ end }}{{ . }}{{ end }}</span>{{ end }}
     <span class="photo-meta">
-        {{ with .Params.focalLength }}{{ . }}mm{{ end }}{{ with .Params.aperture }}{{ if $.Params.focalLength }} &middot; {{ end }}f/{{ . }}{{ end }}{{ with .Params.shutterSpeed }}{{ if or $.Params.focalLength $.Params.aperture }} &middot; {{ end }}{{ . }}{{ end }}{{ with .Params.iso }}{{ if or $.Params.focalLength $.Params.aperture $.Params.shutterSpeed }} &middot; {{ end }}ISO {{ . }}{{ end }}
+        {{ with .Params.focalLength }}{{ . }}mm{{ end }}{{ with .Params.shutterSpeed }}{{ if $.Params.focalLength }} &middot; {{ end }}{{ . }}{{ end }}
     </span>
-    {{ $loc := .Params.location }}{{ if or $loc .Params.date }}<span class="photo-meta">{{ $loc }}{{ with .Params.date }}{{ if $loc }} &middot; {{ end }}{{ .Format "2 Jan 2006" }}{{ end }}</span>{{ end }}
+    {{ with .Params.date }}<span class="photo-meta">{{ .Format "2 Jan 2006" }}</span>{{ end }}
 </figcaption>
