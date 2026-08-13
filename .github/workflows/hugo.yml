@@ -36,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.128.0
+      IMMICH_URL: ${{ secrets.IMMICH_URL }}
+      IMMICH_API_KEY: ${{ secrets.IMMICH_API_KEY }}
     steps:
       - name: Install Hugo CLI
         run: |
@@ -48,10 +50,7 @@ jobs:
         with:
           submodules: recursive
       - name: Import photographs from Immich
-        if: ${{ secrets.IMMICH_URL != '' }}
-        env:
-          IMMICH_URL: ${{ secrets.IMMICH_URL }}
-          IMMICH_API_KEY: ${{ secrets.IMMICH_API_KEY }}
+        if: ${{ env.IMMICH_URL != '' }}
         run: python3 scripts/import-immich.py --clean
       - name: Setup Pages
         id: pages
