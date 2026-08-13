@@ -20,7 +20,7 @@ title = "Mackenzie Trafford"
   [[params.routes]]
     tag = ""
     title = "Photography"
-    subtitle = "I take photographs sometimes."
+    subtitle = ""
     url = "/photography/"
 
   [[params.routes]]
