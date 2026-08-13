@@ -533,7 +533,7 @@ a {
     margin: 0 0 1.75rem;
     background: var(--frame);
     border: 1px solid var(--border);
-    padding: var(--frame-pad) var(--frame-pad) calc(var(--frame-pad) + .25rem);
+    padding: var(--frame-pad);
 }
 
 .photo-link {
@@ -547,16 +547,19 @@ a {
 }
 
 .photo-caption {
-    margin-top: .65rem;
+    margin-top: .4rem;
     display: flex;
     flex-direction: column;
     gap: .15rem;
+    line-height: 1.1;
 }
 
 /* Tiles sit on a white mat in both themes, so captions stay dark there. */
 .photo .photo-title {
     font-weight: 600;
-    font-size: .95rem;
+    font-size: .8rem;
+    line-height: 1.1;
+    margin: 0;
     text-decoration: none;
     color: #1a1a1a;
 }
@@ -568,7 +571,29 @@ a {
 
 .photo .photo-meta {
     color: #555;
-    font-size: .8rem;
+    font-size: .68rem;
+    line-height: 1.1;
+    margin: 0;
+}
+
+/* Tiles sit on a white mat in both themes, so captions stay dark there. */
+.photo .photo-title {
+    font-weight: 600;
+    font-size: .85rem;
+    line-height: 1.15;
+    text-decoration: none;
+    color: #1a1a1a;
+}
+
+.photo .photo-title:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.photo .photo-meta {
+    color: #555;
+    font-size: .72rem;
+    line-height: 1.2;
 }
 
 /* album groups on the broad photography page */
@@ -610,13 +635,14 @@ a {
 
 .album-preview {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.75rem;
 }
 
-/* crop every preview to the same height so landscape + portrait tile evenly */
+/* bigger, evenly cropped square previews on the main photography page */
 .album-preview .photo-img {
-    height: 220px;
+    aspect-ratio: 1 / 1;
+    height: auto;
     object-fit: cover;
 }
 
