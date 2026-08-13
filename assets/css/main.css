@@ -17,9 +17,9 @@
 /* dark mode colours */
 
 :root[data-theme="dark"] {
-    --bg: #0f1115;
-    --surface: #1a1d23;
-    --footer-bg: #15181d;
+    --bg: #282828;
+    --surface: #1d2021;
+    --footer-bg: #1d2021;
     --text: #e7e9ee;
     --muted: #9aa1ad;
     --border: #2a2f37;
