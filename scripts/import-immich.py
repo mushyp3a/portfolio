@@ -293,7 +293,7 @@ def write_section(slug, title):
         return
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
-        f.write(f'---\ntitle: "{title}"\nimmichAlbum: ""\n---\n\n{title}.\n')
+        f.write(f'---\ntitle: "{title}"\nimmichAlbum: ""\n---\n\n')
 
 
 def clean_section(slug):
