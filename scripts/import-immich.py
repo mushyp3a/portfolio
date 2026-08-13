@@ -59,7 +59,7 @@ USER_AGENT = "Mozilla/5.0 (compatible; ImmichImporter/1.0)"
 # Only listed albums become photography sections. Add/remove as needed.
 ALBUM_MAP = {
     "Birds": ("birds", "Birds"),
-    "Wildlife": ("wildlife", "Wildlife"),
+    "Nature": ("nature", "Nature"),
 }
 
 
