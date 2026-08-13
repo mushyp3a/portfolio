@@ -1014,7 +1014,7 @@ a {
 
 .mosaic {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 40vh, 30vw), 1fr));
+    grid-template-columns: repeat(6, 1fr);
     grid-auto-rows: 0;
     grid-auto-flow: dense;
     column-gap: 8px;
@@ -1214,6 +1214,18 @@ a {
 .redirect-note {
     padding: 4rem 1.5rem;
     color: var(--muted);
+}
+
+@media (max-width: 1200px) {
+    .mosaic {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .mosaic {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 @media (max-width: 760px) {
