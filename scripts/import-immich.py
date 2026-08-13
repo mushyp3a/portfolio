@@ -320,6 +320,17 @@ def main():
         return
 
     os.makedirs(CONTENT_ROOT, exist_ok=True)
+
+    # Remove album folders whose album was deleted in Immich or unmapped, so
+    # stale sections don't linger on the site. Only prunes real section
+    # directories (those containing _index.md), never the top-level page.
+    active_slugs = {slug for _, (slug, _) in mapped}
+    for name in os.listdir(CONTENT_ROOT):
+        path = os.path.join(CONTENT_ROOT, name)
+        if (os.path.isdir(path) and name not in active_slugs
+                and os.path.exists(os.path.join(path, "_index.md"))):
+            shutil.rmtree(path)
+
     for a, (slug, title) in mapped:
         write_section(slug, title)
         if CLEAN:

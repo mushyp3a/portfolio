@@ -30,12 +30,7 @@
                                 <a class="photo-link" href="{{ .RelPermalink }}">
                                     {{ partial "photo-image.html" (dict "page" .) }}
                                 </a>
-                                <figcaption class="photo-caption">
-                                    <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
-                                    <span class="photo-meta">
-                                        {{ .Params.location }}{{ with .Params.focalLength }} &middot; {{ . }}mm{{ end }}
-                                    </span>
-                                </figcaption>
+                                {{ partial "photo-caption.html" . }}
                             </figure>
                         {{ end }}
                     </div>
@@ -77,12 +72,7 @@
                         <a class="photo-link" href="{{ .RelPermalink }}">
                             {{ partial "photo-image.html" (dict "page" .) }}
                         </a>
-                        <figcaption class="photo-caption">
-                            <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
-                            <span class="photo-meta">
-                                {{ .Params.location }}{{ with .Params.focalLength }} &middot; {{ . }}mm{{ end }}
-                            </span>
-                        </figcaption>
+                        {{ partial "photo-caption.html" . }}
                     </figure>
                 {{ end }}
             </div>
@@ -102,12 +92,7 @@
                     <a class="photo-link" href="{{ .RelPermalink }}">
                         {{ partial "photo-image.html" (dict "page" .) }}
                     </a>
-                    <figcaption class="photo-caption">
-                        <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
-                        <span class="photo-meta">
-                            {{ .Params.location }}{{ with .Params.focalLength }} &middot; {{ . }}mm{{ end }}
-                        </span>
-                    </figcaption>
+                    {{ partial "photo-caption.html" . }}
                 </figure>
             {{ end }}
         </div>
