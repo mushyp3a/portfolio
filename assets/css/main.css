@@ -11,6 +11,8 @@
     --max: 1200px;
     --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px rgba(0, 0, 0, .06);
     --shadow-hover: 0 4px 8px rgba(0, 0, 0, .06), 0 16px 40px rgba(0, 0, 0, .10);
+    --frame: #ffffff;
+    --frame-pad: 1rem;
     --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -27,6 +29,8 @@
     --accent-hover: #f5c64b;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .4);
     --shadow-hover: 0 4px 8px rgba(0, 0, 0, .35), 0 16px 40px rgba(0, 0, 0, .5);
+    --frame: #f4f4f1;
+    --frame-pad: 1rem;
 }
 
 * {
@@ -422,3 +426,438 @@ a {
         transform: none;
     }
 }
+
+/* ----------------------------------------------------------------------------
+   Photography
+   Restrained, editorial, image-led. Photographs sit in light mats; the
+   interface chrome is kept to a minimum.
+---------------------------------------------------------------------------- */
+
+/* album index row (parent /photography/ only) */
+
+.albums {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin: 1.25rem 0 0;
+}
+
+.album-link {
+    text-decoration: none;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: .4rem .9rem;
+    font-size: .9rem;
+    transition: border-color .15s ease, color .15s ease;
+}
+
+.album-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* filters */
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: flex-end;
+    margin-top: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.filters label {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+}
+
+.filters select {
+    font: inherit;
+    font-size: .9rem;
+    padding: .4rem .55rem;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.filters select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.filters-reset {
+    margin-top: 1rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.filters-reset:hover {
+    color: var(--text);
+}
+
+.filters-reset:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.filters-count {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: .85rem;
+    white-space: nowrap;
+}
+
+/* gallery (masonry via CSS columns; mixed aspect ratios preserved) */
+
+.gallery {
+    column-width: 300px;
+    column-gap: 1.75rem;
+    margin-top: 2.5rem;
+}
+
+.photo {
+    break-inside: avoid;
+    margin: 0 0 1.75rem;
+    background: var(--frame);
+    border: 1px solid var(--border);
+    padding: var(--frame-pad) var(--frame-pad) calc(var(--frame-pad) + .25rem);
+}
+
+.photo-link {
+    display: block;
+}
+
+.photo-img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.photo-caption {
+    margin-top: .65rem;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+
+/* Tiles sit on a white mat in both themes, so captions stay dark there. */
+.photo .photo-title {
+    font-weight: 600;
+    font-size: .95rem;
+    text-decoration: none;
+    color: #1a1a1a;
+}
+
+.photo .photo-title:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.photo .photo-meta {
+    color: #555;
+    font-size: .8rem;
+}
+
+/* album groups on the broad photography page */
+.albums-view {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+.albums-view[hidden] {
+    display: none;
+}
+
+.album-group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.album-group-head h2 {
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.album-group-head a {
+    font-size: .85rem;
+    text-decoration: none;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.album-group-head a:hover {
+    color: var(--text);
+}
+
+.album-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+/* crop every preview to the same height so landscape + portrait tile evenly */
+.album-preview .photo-img {
+    height: 220px;
+    object-fit: cover;
+}
+
+/* search / filter all photographs */
+.search-toggle {
+    margin-top: 2.5rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+}
+
+.search-toggle:hover {
+    border-bottom-color: var(--accent);
+}
+
+.photo-search[hidden] {
+    display: none;
+}
+
+.photo-search {
+    margin-top: 2.5rem;
+}
+
+.facets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 2.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    margin-bottom: 2rem;
+}
+
+.facet {
+    min-width: 180px;
+}
+
+.facet > h3 {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin: 0 0 .6rem;
+}
+
+.facet-options {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    max-height: 12rem;
+    overflow: auto;
+}
+
+.facet label {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .9rem;
+    cursor: pointer;
+}
+
+.facet label input {
+    accent-color: var(--accent);
+}
+
+.facet-range {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.facet-range input {
+    width: 5rem;
+    padding: .35rem .5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+}
+
+/* single photograph page */
+
+.photo-single {
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+.photo-eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+}
+
+.photo-eyebrow a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.photo-eyebrow a:hover {
+    color: var(--text);
+}
+
+.photo-single h1 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
+}
+
+.photo-frame {
+    background: var(--frame);
+    border: 1px solid var(--border);
+    padding: var(--frame-pad);
+}
+
+.photo-description {
+    margin: 1.5rem 0 0;
+    max-width: 60ch;
+    color: var(--muted);
+}
+
+.photo-meta {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .55rem 1.5rem;
+    margin: 2rem 0 0;
+    max-width: 60ch;
+    font-size: .95rem;
+}
+
+.photo-meta > div {
+    display: contents;
+}
+
+.photo-meta dt {
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    align-self: center;
+}
+
+.photo-meta dd {
+    margin: 0;
+}
+
+/* prev / next */
+
+.photo-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 3rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.photo-nav a {
+    text-decoration: none;
+    color: var(--text);
+    font-size: .95rem;
+}
+
+.photo-nav a:hover {
+    text-decoration: underline;
+}
+
+.photo-nav .label {
+    display: block;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: .25rem;
+}
+
+.photo-nav .next {
+    text-align: right;
+    margin-left: auto;
+}
+
+/* related */
+
+.related {
+    margin: 3.5rem 0 0;
+}
+
+.related h2 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin: 0 0 1.25rem;
+    font-weight: 700;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.related-item {
+    text-decoration: none;
+    color: inherit;
+}
+
+.related-item .photo-img {
+    background: var(--frame);
+    border: 1px solid var(--border);
+    padding: .3rem;
+    transition: border-color .15s ease;
+}
+
+.related-item:hover .photo-img {
+    border-color: var(--accent);
+}
+
+.related-item span {
+    display: block;
+    margin-top: .45rem;
+    font-size: .8rem;
+    color: var(--muted);
+}
+
+@media (max-width: 600px) {
+    .filters {
+        gap: .9rem 1rem;
+    }
+
+    .filters-count {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+

@@ -1,0 +1,109 @@
+{{/*
+  Client-side filtering for the photography section.
+
+  On the broad /photography/ page it builds Camera and Lens checkbox facets
+  from the photos themselves and a focal-length min/max range, combinable
+  (AND across facets, OR within a facet). A toggle swaps the album groups for
+  a flat grid of every photograph. No frameworks, no network calls.
+*/}}
+<script>
+(function () {
+    var search = document.getElementById("photo-search");
+    if (!search) return;
+
+    var toggle = document.querySelector(".search-toggle");
+    var groups = document.querySelector(".albums-view");
+    var figures = Array.prototype.slice.call(search.querySelectorAll(".photo"));
+    if (!figures.length) return;
+
+    function distinct(key) {
+        var seen = {}, out = [];
+        figures.forEach(function (f) {
+            var v = (f.dataset[key] || "").trim();
+            if (v && !seen[v]) { seen[v] = 1; out.push(v); }
+        });
+        return out.sort();
+    }
+
+    function buildFacet(name, container) {
+        distinct(name).forEach(function (v) {
+            var label = document.createElement("label");
+            var cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.value = v;
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(" " + v));
+            container.appendChild(label);
+        });
+    }
+
+    buildFacet("camera", search.querySelector('[data-facet="camera"]'));
+    buildFacet("lens", search.querySelector('[data-facet="lens"]'));
+
+    function selected(name) {
+        return Array.prototype.slice.call(
+            search.querySelectorAll('[data-facet="' + name + '"] input:checked')
+        ).map(function (i) { return i.value; });
+    }
+
+    function num(v) {
+        var n = parseFloat(v);
+        return isNaN(n) ? null : n;
+    }
+
+    var minI = search.querySelector("[data-focal-min]");
+    var maxI = search.querySelector("[data-focal-max]");
+    var count = search.querySelector("[data-count]");
+
+    function apply() {
+        var cams = selected("camera");
+        var lenses = selected("lens");
+        var lo = num(minI.value);
+        var hi = num(maxI.value);
+        var shown = 0;
+        figures.forEach(function (f) {
+            var cam = f.dataset.camera || "";
+            var lens = f.dataset.lens || "";
+            var foc = num(f.dataset.focal);
+            var ok = true;
+            if (cams.length && cams.indexOf(cam) === -1) ok = false;
+            if (lenses.length && lenses.indexOf(lens) === -1) ok = false;
+            if (ok && lo !== null && (foc === null || foc < lo)) ok = false;
+            if (ok && hi !== null && (foc === null || foc > hi)) ok = false;
+            f.style.display = ok ? "" : "none";
+            if (ok) shown++;
+        });
+        if (count) count.textContent = shown + (shown === 1 ? " photograph" : " photographs");
+    }
+
+    search.addEventListener("change", apply);
+    minI.addEventListener("input", apply);
+    maxI.addEventListener("input", apply);
+
+    var reset = search.querySelector(".filters-reset");
+    if (reset) reset.addEventListener("click", function () {
+        Array.prototype.slice.call(search.querySelectorAll("input")).forEach(function (i) {
+            i.checked = false;
+            i.value = "";
+        });
+        apply();
+    });
+
+    if (toggle) toggle.addEventListener("click", function () {
+        var open = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!open));
+        if (open) {
+            search.hidden = true;
+            if (groups) groups.hidden = false;
+            toggle.textContent = "Search all photographs";
+        } else {
+            search.hidden = false;
+            if (groups) groups.hidden = true;
+            toggle.textContent = "Close search";
+            apply();
+        }
+    });
+
+    apply();
+})();
+</script>

@@ -1,0 +1,41 @@
+# Reverse proxy that serves Immich image bytes to the public web WITHOUT
+# exposing your API key. The key lives ONLY in this file's environment
+# (IMMICH_API_KEY). The Hugo site references e.g.
+#   https://img.example.com/assets/<id>/thumbnail
+# and this proxy rewrites it to Immich's authenticated API endpoint.
+#
+# Prerequisites:
+#   - DNS: point img.example.com at this Caddy host (A/AAAA or CNAME).
+#   - TLS is obtained automatically via ACME (Let's Encrypt) — no config needed.
+#   - The IMMICH_API_KEY env var must be set where Caddy runs (see below).
+#   - Replace `immich:2283` with your Immich API host:port (docker service
+#     name, LAN IP, or tailscale IP — wherever Caddy can reach it).
+#
+# nginx equivalent (only /assets/<id>/(thumbnail|original) proxied, key added):
+#   server {
+#     listen 443 ssl; server_name img.example.com;
+#     location ~ ^/assets/([^/]+)/(thumbnail|original)$ {
+#       proxy_pass http://immich:2283/api/assets/$1/$2;
+#       proxy_set_header x-api-key $IMMICH_API_KEY;
+#       proxy_set_header Authorization "";
+#     }
+#     location / { return 404; }
+#   }
+
+img.example.com {
+    # Match only asset thumbnail/original requests; block everything else.
+    @asset path_regexp asset `^/assets/([^/]+)/(thumbnail|original)$`
+
+    # Rewrite /assets/<id>/<kind> -> Immich's /api/assets/<id>/<kind>
+    rewrite @asset /api/assets/{http.regexp.asset.1}/{http.regexp.asset.2}
+
+    reverse_proxy @asset immich:2283 {
+        # Inject the API key server-side. Sourced from the IMMICH_API_KEY env var.
+        header_up x-api-key {env.IMMICH_API_KEY}
+        # Strip any client-supplied auth so only the proxy's key is used.
+        header_up Authorization ""
+    }
+
+    # Anything that is not an asset request is forbidden.
+    respond 404
+}

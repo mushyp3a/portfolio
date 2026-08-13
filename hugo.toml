@@ -6,11 +6,21 @@ title = "Mackenzie Trafford"
   # description for search/social previews
   tagline = ""
 
+  # Immich image source. photo-image.html resolves each photo's immichId
+  # against this template. The API key lives ONLY in the proxy
+  # (see proxy/Caddyfile.example) and in the GitHub repo secret — never in
+  # client JavaScript. See scripts/import-immich.py for the full flow used by
+  # the scheduled GitHub Action.
+  immichBaseURL = "https://img.mushypea.win/assets/{id}/thumbnail"
+  # Full-resolution variant, used on the single-photo page. The proxy must
+  # allow the "original" segment (see proxy/Caddyfile.example / NPM snippet).
+  immichOriginalURL = "https://img.mushypea.win/assets/{id}/original"
+
   # homepage route cards
   [[params.routes]]
     tag = ""
     title = "Photography"
-    subtitle = "I take photos sometimes."
+    subtitle = "Photographs, mostly made on walks."
     url = "/photography/"
 
   [[params.routes]]

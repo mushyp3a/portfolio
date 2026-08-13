@@ -1,0 +1,121 @@
+{{ define "main" }}
+
+<section class="page photography">
+
+    <header>
+        <h1>{{ .Title }}</h1>
+        {{ with .Content }}
+            <div class="content">{{ . }}</div>
+        {{ end }}
+    </header>
+
+    {{ if eq .RelPermalink "/photography/" }}
+
+        {{/* album groups: title + a first row of pictures + link to the rest */}}
+        <div class="albums-view">
+            {{ range .Sections }}
+                <section class="album-group">
+                    <div class="album-group-head">
+                        <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+                        <a href="{{ .RelPermalink }}">View all {{ len .RegularPages }} photographs &rarr;</a>
+                    </div>
+                    <div class="album-preview">
+                        {{ range (.RegularPages.ByDate.Reverse | first 4) }}
+                            <figure class="photo"
+                                data-location="{{ .Params.location }}"
+                                data-year="{{ .Date.Year }}"
+                                data-camera="{{ .Params.camera }}"
+                                data-lens="{{ .Params.lens }}"
+                                data-focal="{{ .Params.focalLength }}">
+                                <a class="photo-link" href="{{ .RelPermalink }}">
+                                    {{ partial "photo-image.html" (dict "page" .) }}
+                                </a>
+                                <figcaption class="photo-caption">
+                                    <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+                                    <span class="photo-meta">
+                                        {{ .Params.location }}{{ with .Params.focalLength }} &middot; {{ . }}mm{{ end }}
+                                    </span>
+                                </figcaption>
+                            </figure>
+                        {{ end }}
+                    </div>
+                </section>
+            {{ end }}
+        </div>
+
+        {{/* search / filter across every photograph */}}
+        <button type="button" class="search-toggle" aria-expanded="false" aria-controls="photo-search">Search all photographs</button>
+        <section id="photo-search" class="photo-search" hidden>
+            <div class="facets" aria-label="Filter photographs">
+                <div class="facet">
+                    <h3>Camera</h3>
+                    <div class="facet-options" data-facet="camera"></div>
+                </div>
+                <div class="facet">
+                    <h3>Lens</h3>
+                    <div class="facet-options" data-facet="lens"></div>
+                </div>
+                <div class="facet">
+                    <h3>Focal length (mm)</h3>
+                    <div class="facet-range">
+                        <input type="number" min="0" inputmode="numeric" data-focal-min placeholder="min">
+                        <span>&ndash;</span>
+                        <input type="number" min="0" inputmode="numeric" data-focal-max placeholder="max">
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="filters-reset">Reset</button>
+            <span class="filters-count" data-count aria-live="polite"></span>
+            <div class="gallery">
+                {{ range .RegularPagesRecursive.ByDate.Reverse }}
+                    <figure class="photo"
+                        data-location="{{ .Params.location }}"
+                        data-year="{{ .Date.Year }}"
+                        data-camera="{{ .Params.camera }}"
+                        data-lens="{{ .Params.lens }}"
+                        data-focal="{{ .Params.focalLength }}">
+                        <a class="photo-link" href="{{ .RelPermalink }}">
+                            {{ partial "photo-image.html" (dict "page" .) }}
+                        </a>
+                        <figcaption class="photo-caption">
+                            <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+                            <span class="photo-meta">
+                                {{ .Params.location }}{{ with .Params.focalLength }} &middot; {{ . }}mm{{ end }}
+                            </span>
+                        </figcaption>
+                    </figure>
+                {{ end }}
+            </div>
+        </section>
+
+    {{ else }}
+
+        {{/* album page: flat gallery, no filters */}}
+        <div class="gallery">
+            {{ range .RegularPages.ByDate.Reverse }}
+                <figure class="photo"
+                    data-location="{{ .Params.location }}"
+                    data-year="{{ .Date.Year }}"
+                    data-camera="{{ .Params.camera }}"
+                    data-lens="{{ .Params.lens }}"
+                    data-focal="{{ .Params.focalLength }}">
+                    <a class="photo-link" href="{{ .RelPermalink }}">
+                        {{ partial "photo-image.html" (dict "page" .) }}
+                    </a>
+                    <figcaption class="photo-caption">
+                        <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+                        <span class="photo-meta">
+                            {{ .Params.location }}{{ with .Params.focalLength }} &middot; {{ . }}mm{{ end }}
+                        </span>
+                    </figcaption>
+                </figure>
+            {{ end }}
+        </div>
+
+    {{ end }}
+
+</section>
+
+{{ partial "photo-filters.html" . }}
+
+{{ end }}

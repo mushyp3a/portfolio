@@ -43,6 +43,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Import photographs from Immich
+        if: ${{ secrets.IMMICH_URL != '' }}
+        env:
+          IMMICH_URL: ${{ secrets.IMMICH_URL }}
+          IMMICH_API_KEY: ${{ secrets.IMMICH_API_KEY }}
+        run: python3 scripts/import-immich.py --clean
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
