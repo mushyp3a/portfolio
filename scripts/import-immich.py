@@ -13,10 +13,10 @@ What it does
    (content/photography/<slug>/). Mapping is the explicit ALBUM_MAP below.
 3. For every asset in a mapped album, writes a photo page in camelCase front
    matter, pulling camera/lens/exposure/ISO/date from Immich EXIF.
-4. Stores the Immich asset id as `immichId`. The site's photo-image.html
-   partial resolves the image URL via the `immichBaseURL` site param (your
-   reverse proxy). `image` is left as a deterministic placeholder so local
-   builds still preview; the live site overrides it via immichBaseURL.
+ 4. Stores the Immich asset id as `immichId`. The site's photo-image.html
+    partial resolves the image URL via the `immichBaseURL` site param (your
+    reverse proxy). There is no placeholder image — the live site serves
+    bytes straight from Immich; `image` is left empty.
 
 Image serving (important)
 -------------------------
@@ -57,7 +57,10 @@ USER_AGENT = "Mozilla/5.0 (compatible; ImmichImporter/1.0)"
 
 # Explicit album mapping: Immich album name -> (section slug, section title).
 # Only listed albums become photography sections. Add/remove as needed.
+# "Featured" is the curated highlight album and always sorts first in the
+# sidebar; the rest of the albums are auto-filled below it.
 ALBUM_MAP = {
+    "Featured": ("featured", "Featured"),
     "Birds": ("birds", "Birds"),
     "Nature": ("nature", "Nature"),
     "Street": ("street", "Street"),
@@ -263,9 +266,10 @@ def build_front_matter(asset):
         "aperture": fnumber,
         "shutterSpeed": shutter,
         "iso": iso,
-        # Placeholder so local builds preview; live site overrides via
-        # immichBaseURL + immichId.
-        "image": f"https://picsum.photos/seed/{asset_id}/1200/800",
+        # No placeholder: the live site resolves the image straight from
+        # Immich via immichBaseURL + immichId (see photo-image.html /
+        # photo-image-src.html). "image" is intentionally left empty.
+        "image": "",
         "description": str(ev("description") or ""),
         "featured": False,
         "immichId": asset_id,

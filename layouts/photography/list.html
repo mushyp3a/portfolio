@@ -1,46 +1,42 @@
-{{ define "main" }}
+ {{ define "main" }}
 
-<section class="page photography">
+{{ if ne .RelPermalink "/photography/" }}
+    {{/* Album sub-pages are removed — send them to the unified grid, filtered. */}}
+    {{ $slug := .RelPermalink }}
+    {{ $slug = strings.TrimPrefix "/photography/" $slug }}
+    {{ $slug = strings.TrimSuffix "/" $slug }}
+    <meta http-equiv="refresh" content="0; url={{ relURL (printf "/photography/#%s" $slug) }}">
+    <script>window.location.replace("/photography/#{{ $slug }}");</script>
+    <p class="redirect-note">Redirecting to <a href="/photography/#{{ $slug }}">the gallery</a>&hellip;</p>
+{{ else }}
 
-    <header>
-        <h1>{{ .Title }}</h1>
-        {{ with .Content }}
-            <div class="content">{{ . }}</div>
-        {{ end }}
-    </header>
+<section class="photo-layout">
 
-    {{ if eq .RelPermalink "/photography/" }}
+    <aside class="photo-sidebar" aria-label="Photography navigation">
+        <h1 class="sidebar-title">Photography</h1>
 
-        {{/* album groups: title + a first row of pictures + link to the rest */}}
-        <div class="albums-view">
-            {{ range .Sections }}
-                <section class="album-group">
-                    <div class="album-group-head">
-                        <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
-                        <a href="{{ .RelPermalink }}">View all {{ len .RegularPages }} photographs &rarr;</a>
-                    </div>
-                    <div class="album-preview">
-                        {{ range (.RegularPages.ByDate.Reverse | first 4) }}
-                            <figure class="photo"
-                                data-location="{{ .Params.location }}"
-                                data-year="{{ .Date.Year }}"
-                                data-camera="{{ .Params.camera }}"
-                                data-lens="{{ .Params.lens }}"
-                                data-focal="{{ .Params.focalLength }}">
-                                <a class="photo-link" href="{{ .RelPermalink }}">
-                                    {{ partial "photo-image.html" (dict "page" .) }}
-                                </a>
-                                {{ partial "photo-caption.html" . }}
-                            </figure>
-                        {{ end }}
-                    </div>
-                </section>
+        <nav class="sidebar-nav" aria-label="Albums">
+            {{ with .Site.GetPage "photography/featured" }}
+                <a class="album-link" href="#featured" data-filter="featured">
+                    <span class="album-name">Featured</span>
+                    <span class="album-count">{{ len .RegularPages }}</span>
+                </a>
             {{ end }}
-        </div>
+            {{ range .Sections }}
+                {{ if ne .RelPermalink "/photography/featured/" }}
+                    {{ $slug := strings.TrimPrefix "/photography/" .RelPermalink }}{{ $slug = strings.TrimSuffix "/" $slug }}
+                    <a class="album-link" href="#{{ $slug }}" data-filter="{{ $slug }}">
+                        <span class="album-name">{{ .Title }}</span>
+                        <span class="album-count">{{ len .RegularPages }}</span>
+                    </a>
+                {{ end }}
+            {{ end }}
+        </nav>
 
-        {{/* search / filter across every photograph */}}
-        <button type="button" class="search-toggle" aria-expanded="false" aria-controls="photo-search">Search all photographs</button>
-        <section id="photo-search" class="photo-search" hidden>
+        <hr class="sidebar-rule">
+
+        <details class="sidebar-filters">
+            <summary>Filters</summary>
             <div class="facets" aria-label="Filter photographs">
                 <div class="facet">
                     <h3>Camera</h3>
@@ -59,48 +55,64 @@
                     </div>
                 </div>
             </div>
-            <button type="button" class="filters-reset">Reset</button>
-            <span class="filters-count" data-count aria-live="polite"></span>
-            <div class="gallery">
-                {{ range .RegularPagesRecursive.ByDate.Reverse }}
-                    <figure class="photo"
-                        data-location="{{ .Params.location }}"
-                        data-year="{{ .Date.Year }}"
-                        data-camera="{{ .Params.camera }}"
-                        data-lens="{{ .Params.lens }}"
-                        data-focal="{{ .Params.focalLength }}">
-                        <a class="photo-link" href="{{ .RelPermalink }}">
-                            {{ partial "photo-image.html" (dict "page" .) }}
-                        </a>
-                        {{ partial "photo-caption.html" . }}
-                    </figure>
-                {{ end }}
-            </div>
-        </section>
+            <button type="button" class="filters-reset">Reset filters</button>
+        </details>
+    </aside>
 
-    {{ else }}
-
-        {{/* album page: flat gallery, no filters */}}
-        <div class="gallery">
-            {{ range .RegularPages.ByDate.Reverse }}
-                <figure class="photo"
-                    data-location="{{ .Params.location }}"
-                    data-year="{{ .Date.Year }}"
-                    data-camera="{{ .Params.camera }}"
-                    data-lens="{{ .Params.lens }}"
-                    data-focal="{{ .Params.focalLength }}">
-                    <a class="photo-link" href="{{ .RelPermalink }}">
-                        {{ partial "photo-image.html" (dict "page" .) }}
-                    </a>
-                    {{ partial "photo-caption.html" . }}
-                </figure>
+    <div class="photo-main">
+        <div class="mosaic" id="mosaic">
+            {{ range .RegularPagesRecursive.ByDate.Reverse }}
+                {{ $album := strings.TrimPrefix "/photography/" .CurrentSection.RelPermalink }}{{ $album = strings.TrimSuffix "/" $album }}
+                <a class="mosaic-item" href="{{ .RelPermalink }}" data-permalink="{{ .RelPermalink }}"
+                   data-album="{{ $album }}"
+                   data-location="{{ .Params.location }}"
+                   data-year="{{ .Date.Year }}"
+                   data-camera="{{ .Params.camera }}"
+                   data-lens="{{ .Params.lens }}"
+                   data-focal="{{ .Params.focalLength }}">
+                    {{ partial "photo-image.html" (dict "page" .) }}
+                </a>
             {{ end }}
         </div>
-
-    {{ end }}
+        <p class="mosaic-count" data-count aria-live="polite"></p>
+    </div>
 
 </section>
 
-{{ partial "photo-filters.html" . }}
+{{ $photos := slice }}
+{{ range .RegularPagesRecursive.ByDate.Reverse }}
+    {{ $album := strings.TrimPrefix "/photography/" .CurrentSection.RelPermalink }}{{ $album = strings.TrimSuffix "/" $album }}
+    {{ $date := "" }}{{ with .Params.date }}{{ $date = .Format "2 January 2006" }}{{ end }}
+    {{ $loc := "" }}{{ with .Params.location }}{{ $loc = . }}{{ end }}
+    {{ $cam := "" }}{{ with .Params.camera }}{{ $cam = . }}{{ end }}
+    {{ $lens := "" }}{{ with .Params.lens }}{{ $lens = . }}{{ end }}
+    {{ $foc := "" }}{{ with .Params.focalLength }}{{ $foc = . }}{{ end }}
+    {{ $ap := "" }}{{ with .Params.aperture }}{{ $ap = . }}{{ end }}
+    {{ $ss := "" }}{{ with .Params.shutterSpeed }}{{ $ss = . }}{{ end }}
+    {{ $iso := "" }}{{ with .Params.iso }}{{ $iso = . }}{{ end }}
+    {{ $sp := "" }}{{ with .Params.species }}{{ $sp = . }}{{ end }}
+    {{ $sci := "" }}{{ with .Params.scientificName }}{{ $sci = . }}{{ end }}
+    {{ $photos = $photos | append (dict
+        "title" .Title
+        "permalink" .RelPermalink
+        "album" $album
+        "date" $date
+        "location" $loc
+        "camera" $cam
+        "lens" $lens
+        "focalLength" $foc
+        "aperture" $ap
+        "shutterSpeed" $ss
+        "iso" $iso
+        "species" $sp
+        "scientificName" $sci
+        "image" (partial "photo-image-src.html" (dict "page" . "quality" "original"))
+    ) }}
+{{ end }}
+<script type="application/json" id="photo-data">{{ $photos | jsonify | safeJS }}</script>
+
+{{ partial "photo-lightbox.html" . }}
+
+{{ end }}
 
 {{ end }}

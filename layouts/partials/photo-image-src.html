@@ -1,0 +1,18 @@
+ {{- /*
+   Returns ONLY the resolved image URL for a photograph (no <img> tag), so the
+   lightbox can drop it into its own markup. Resolution rules are identical to
+   photo-image.html — Immich takes precedence over the (now unused) placeholder.
+   Whitespace is trimmed so the result is a clean URL string.
+
+   Quality: "original" uses immichOriginalURL, anything else uses immichBaseURL
+   (the thumbnail endpoint). Set site param immichUseOriginal = true to upgrade
+   the gallery grid to originals as well (the lightbox always uses originals).
+ */ -}}
+{{- $quality := .quality | default "thumbnail" -}}
+{{- if site.Params.immichUseOriginal }}{{ $quality = "original" }}{{ end -}}
+{{- $base := site.Params.immichBaseURL -}}
+{{- with site.Params.immichOriginalURL }}{{ if eq $quality "original" }}{{ $base = . }}{{ end }}{{ end -}}
+{{- $id := .page.Params.immichId -}}
+{{- $src := .page.Params.image | default "" -}}
+{{- if and $id $base }}{{ $src = replace $base "{id}" $id }}{{ end -}}
+{{- $src -}}

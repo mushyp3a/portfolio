@@ -1,0 +1,292 @@
+ {{/*
+   Lightbox markup + the single client-side script that drives the
+   photography page: sidebar album filtering, facet/focal filtering,
+   the masonry collage layout, and the click-to-popup viewer.
+
+   Photo data is read from the #photo-data JSON blob emitted by
+   layouts/photography/list.html, so no extra network calls are needed and
+   the viewer mirrors the single-photo page exactly.
+ */}}
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photograph viewer" aria-hidden="true">
+    <button class="lb-btn lb-close" type="button" aria-label="Close viewer">&times;</button>
+    <button class="lb-btn lb-prev" type="button" aria-label="Previous photograph">&#8249;</button>
+    <button class="lb-btn lb-next" type="button" aria-label="Next photograph">&#8250;</button>
+
+    <div class="lb-stage">
+        <figure class="lb-frame">
+            <img id="lb-img" src="" alt="">
+        </figure>
+    </div>
+
+    <div class="lb-panel">
+        <h2 class="lb-title" id="lb-title"></h2>
+        <dl class="lb-meta" id="lb-meta"></dl>
+        <div class="lb-nav">
+            <button class="lb-textbtn" id="lb-prev" type="button">&lsaquo; Previous</button>
+            <button class="lb-textbtn lb-next" id="lb-next" type="button">Next &rsaquo;</button>
+        </div>
+        <a class="lb-open" id="lb-open" href="">Open full page &#8599;</a>
+    </div>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var dataEl = document.getElementById("photo-data");
+    if (!dataEl) return;
+    var photos = [];
+    try { photos = JSON.parse(dataEl.textContent) || []; } catch (e) { photos = []; }
+
+    /* ---------- helpers ---------- */
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    function num(v) { var n = parseFloat(v); return isNaN(n) ? null : n; }
+
+    /* ---------- filter state ---------- */
+    var state = { album: null, cameras: {}, lenses: {}, focalMin: null, focalMax: null };
+
+    function match(p) {
+        if (state.album && p.album !== state.album) return false;
+        var cams = Object.keys(state.cameras).filter(function (k) { return state.cameras[k]; });
+        var lens = Object.keys(state.lenses).filter(function (k) { return state.lenses[k]; });
+        if (cams.length && cams.indexOf(p.camera) === -1) return false;
+        if (lens.length && lens.indexOf(p.lens) === -1) return false;
+        var foc = num(p.focalLength);
+        if (foc !== null) {
+            if (state.focalMin !== null && foc < state.focalMin) return false;
+            if (state.focalMax !== null && foc > state.focalMax) return false;
+        } else if (state.focalMin !== null || state.focalMax !== null) {
+            return false;
+        }
+        return true;
+    }
+
+    /* ---------- masonry collage ---------- */
+    var mosaic = document.getElementById("mosaic");
+    var rowH = 0, gap = 8;
+    function layoutItem(item) {
+        var img = item.querySelector("img");
+        var h = img ? img.getBoundingClientRect().height : 0;
+        if (!h) return;
+        item.style.gridRowEnd = "span " + Math.ceil((h + gap) / (rowH + gap));
+    }
+    function layoutAll() {
+        if (!mosaic) return;
+        Array.prototype.forEach.call(mosaic.querySelectorAll(".mosaic-item"), layoutItem);
+    }
+    if (mosaic) {
+        Array.prototype.forEach.call(mosaic.querySelectorAll(".mosaic-item img"), function (img) {
+            var item = img.closest(".mosaic-item");
+            if (img.complete) layoutItem(item);
+            img.addEventListener("load", function () { layoutItem(item); });
+            img.addEventListener("error", function () { layoutItem(item); });
+        });
+        var rt;
+        window.addEventListener("resize", function () {
+            clearTimeout(rt); rt = setTimeout(layoutAll, 150);
+        });
+    }
+
+    /* ---------- filtering UI ---------- */
+    function distinct(key) {
+        var seen = {}, out = [];
+        photos.forEach(function (p) {
+            var v = (p[key] || "").trim();
+            if (v && !seen[v]) { seen[v] = 1; out.push(v); }
+        });
+        return out.sort();
+    }
+    function buildFacet(name, container) {
+        distinct(name).forEach(function (v) {
+            var label = document.createElement("label");
+            var cb = document.createElement("input");
+            cb.type = "checkbox"; cb.value = v;
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(" " + v));
+            container.appendChild(label);
+            cb.addEventListener("change", function () {
+                if (name === "camera") state.cameras[v] = cb.checked;
+                else state.lenses[v] = cb.checked;
+                applyFilters();
+            });
+        });
+    }
+
+    var camBox = document.querySelector('[data-facet="camera"]');
+    var lensBox = document.querySelector('[data-facet="lens"]');
+    if (camBox) buildFacet("camera", camBox);
+    if (lensBox) buildFacet("lens", lensBox);
+
+    var minI = document.querySelector("[data-focal-min]");
+    var maxI = document.querySelector("[data-focal-max]");
+    var countEl = document.querySelector("[data-count]");
+
+    function applyFilters() {
+        if (!mosaic) return;
+        var shown = 0;
+        Array.prototype.forEach.call(mosaic.querySelectorAll(".mosaic-item"), function (item) {
+            var p = {
+                album: item.dataset.album, camera: item.dataset.camera || "",
+                lens: item.dataset.lens || "", focalLength: item.dataset.focal
+            };
+            var ok = match(p);
+            item.style.display = ok ? "" : "none";
+            if (ok) shown++;
+        });
+        if (countEl) countEl.textContent = shown + (shown === 1 ? " photograph" : " photographs");
+        if (mosaic.offsetParent !== null) layoutAll();
+    }
+
+    if (minI) minI.addEventListener("input", function () {
+        state.focalMin = num(minI.value); applyFilters();
+    });
+    if (maxI) maxI.addEventListener("input", function () {
+        state.focalMax = num(maxI.value); applyFilters();
+    });
+
+    var resetBtn = document.querySelector(".filters-reset");
+    if (resetBtn) resetBtn.addEventListener("click", function () {
+        state = { album: null, cameras: {}, lenses: {}, focalMin: null, focalMax: null };
+        if (minI) minI.value = ""; if (maxI) maxI.value = "";
+        Array.prototype.forEach.call(document.querySelectorAll(".facet-options input"), function (i) { i.checked = false; });
+        setActiveAlbum(null);
+        applyFilters();
+    });
+
+    /* ---------- sidebar album navigation ---------- */
+    var links = Array.prototype.slice.call(document.querySelectorAll(".album-link"));
+    function setActiveAlbum(slug) {
+        links.forEach(function (l) {
+            l.classList.toggle("is-active", slug !== null && l.dataset.filter === slug);
+        });
+    }
+    function setAlbum(slug) {
+        state.album = (state.album === slug) ? null : slug;
+        setActiveAlbum(state.album);
+        if (state.album) {
+            history.replaceState(null, "", "#" + state.album);
+        } else if (location.hash) {
+            history.replaceState(null, "", location.pathname + location.search);
+        }
+        applyFilters();
+    }
+    links.forEach(function (l) {
+        l.addEventListener("click", function (e) {
+            e.preventDefault();
+            setAlbum(l.dataset.filter);
+        });
+    });
+    var titleEl = document.querySelector(".sidebar-title");
+    if (titleEl) titleEl.addEventListener("click", function () {
+        state.album = null; setActiveAlbum(null);
+        if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+        applyFilters();
+    });
+
+    /* ---------- lightbox ---------- */
+    var lb = document.getElementById("lightbox");
+    var lbImg = document.getElementById("lb-img");
+    var lbTitle = document.getElementById("lb-title");
+    var lbMeta = document.getElementById("lb-meta");
+    var lbOpen = document.getElementById("lb-open");
+    var lbPrevBtn = document.getElementById("lb-prev");
+    var lbNextBtn = document.getElementById("lb-next");
+    var lbClose = lb.querySelector(".lb-close");
+    var lbPrevArrow = lb.querySelector(".lb-prev");
+    var lbNextArrow = lb.querySelector(".lb-next");
+    var lbVisible = [], lbIndex = -1, lastFocus = null;
+
+    function metaHTML(p) {
+        var rows = [
+            ["Species", p.species],
+            ["Scientific name", p.scientificName],
+            ["Date", p.date],
+            ["Location", p.location],
+            ["Camera", p.camera],
+            ["Lens", p.lens],
+            ["Focal length", p.focalLength ? p.focalLength + "mm" : ""],
+            ["Aperture", p.aperture ? "f/" + p.aperture : ""],
+            ["Shutter speed", p.shutterSpeed],
+            ["ISO", p.iso]
+        ];
+        return rows.filter(function (r) { return r[1]; })
+            .map(function (r) { return "<div><dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd></div>"; })
+            .join("");
+    }
+
+    function render() {
+        var p = lbVisible[lbIndex];
+        if (!p) return;
+        lbImg.src = p.image || "";
+        lbImg.alt = p.title || "";
+        lbTitle.textContent = p.title || "";
+        lbMeta.innerHTML = metaHTML(p);
+        lbOpen.href = p.permalink || "#";
+        var hasPrev = lbIndex > 0;
+        var hasNext = lbIndex < lbVisible.length - 1;
+        lbPrevBtn.disabled = !hasPrev; lbPrevArrow.disabled = !hasPrev;
+        lbNextBtn.disabled = !hasNext; lbNextArrow.disabled = !hasNext;
+        lbPrevBtn.style.visibility = hasPrev ? "visible" : "hidden";
+        lbNextBtn.style.visibility = hasNext ? "visible" : "hidden";
+        lbPrevArrow.style.display = hasPrev ? "" : "none";
+        lbNextArrow.style.display = hasNext ? "" : "none";
+    }
+
+    function openAt(idx) { lbIndex = idx; render(); lb.classList.add("open"); lb.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; lbClose.focus(); }
+    function close() {
+        lb.classList.remove("open"); lb.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        if (lastFocus) lastFocus.focus();
+    }
+    function step(d) {
+        var n = lbIndex + d;
+        if (n >= 0 && n < lbVisible.length) { lbIndex = n; render(); }
+    }
+
+    if (mosaic) {
+        mosaic.addEventListener("click", function (e) {
+            var item = e.target.closest(".mosaic-item");
+            if (!item) return;
+            e.preventDefault();
+            lastFocus = item;
+            lbVisible = photos.filter(match);
+            var perm = item.dataset.permalink;
+            var idx = -1;
+            for (var i = 0; i < lbVisible.length; i++) { if (lbVisible[i].permalink === perm) { idx = i; break; } }
+            if (idx === -1) { lbVisible = [photos.filter(function (p) { return p.permalink === perm; })[0]]; idx = 0; }
+            openAt(idx);
+        });
+    }
+
+    lbClose.addEventListener("click", close);
+    lbPrevBtn.addEventListener("click", function () { step(-1); });
+    lbNextBtn.addEventListener("click", function () { step(1); });
+    lbPrevArrow.addEventListener("click", function () { step(-1); });
+    lbNextArrow.addEventListener("click", function () { step(1); });
+    lb.addEventListener("click", function (e) {
+        if (e.target === lb || e.target.classList.contains("lb-stage") || e.target.classList.contains("lb-frame")) close();
+    });
+    document.addEventListener("keydown", function (e) {
+        if (!lb.classList.contains("open")) return;
+        if (e.key === "Escape") close();
+        else if (e.key === "ArrowLeft") step(-1);
+        else if (e.key === "ArrowRight") step(1);
+    });
+
+    /* ---------- boot ---------- */
+    var hash = (location.hash || "").replace("#", "");
+    if (hash) {
+        var found = false;
+        links.forEach(function (l) { if (l.dataset.filter === hash) { found = true; } });
+        if (found) { state.album = hash; setActiveAlbum(hash); }
+    }
+    applyFilters();
+    if (document.readyState === "complete") layoutAll();
+    else window.addEventListener("load", layoutAll);
+})();
+</script>

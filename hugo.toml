@@ -16,6 +16,11 @@ title = "Mackenzie Trafford"
   # allow the "original" segment (see proxy/Caddyfile.example / NPM snippet).
   immichOriginalURL = "https://img.mushypea.win/assets/{id}/original"
 
+  # Image quality for the gallery grid.
+  #   false (default) -> grid uses thumbnails, popup/lightbox uses originals.
+  #   true            -> grid uses full-resolution originals too (heavier load).
+  immichUseOriginal = true
+
   # homepage route cards
   [[params.routes]]
     tag = ""

@@ -1,32 +1,14 @@
-{{/*
-  Resolves the image source for a photograph.
+ {{/*
+   Resolves the image source for a photograph.
 
-  This is the ONLY place in the site that knows where images come from,
-  so changing providers (placeholder -> Immich) is a one-file edit.
+   This is the ONLY place in the site that knows where images come from,
+   so changing providers is a one-file edit. The URL itself is computed by
+   partial "photo-image-src.html" (shared with the lightbox).
 
-  Today:
-    .Params.image holds an absolute remote URL (placeholder service now).
+   Production: each photo carries an immichId and hugo.toml sets
+   immichBaseURL / immichOriginalURL to your reverse-proxied Immich endpoint,
+   so the <img> is served straight from Immich. No API key ever ships to the
+   client. The old `image` placeholder is no longer used.
+ */}}
 
-  Later (no template changes elsewhere):
-    set params.immichBaseURL in hugo.toml to your Immich asset endpoint
-    containing the token "{id}", and give each photo an immichId.
-    The partial builds the URL and the site serves bytes from Immich.
-
-  No Immich API key is ever written here or shipped to client JavaScript.
-*/}}
-
- {{ $quality := .quality | default "thumbnail" }}
- {{ $base := site.Params.immichBaseURL }}
- {{ with site.Params.immichOriginalURL }}
-   {{ if eq $quality "original" }}{{ $base = . }}{{ end }}
- {{ end }}
-
- {{ $src := .page.Params.image }}
-
- {{ with .page.Params.immichId }}
-   {{ with $base }}
-     {{ $src = replace . "{id}" $.page.Params.immichId }}
-   {{ end }}
- {{ end }}
-
-<img class="photo-img" src="{{ $src }}" alt="{{ .page.Title }}" loading="lazy" decoding="async">
+ <img class="photo-img" src="{{ partial "photo-image-src.html" . }}" alt="{{ .page.Title }}" loading="lazy" decoding="async">
