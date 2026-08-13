@@ -60,6 +60,7 @@ USER_AGENT = "Mozilla/5.0 (compatible; ImmichImporter/1.0)"
 ALBUM_MAP = {
     "Birds": ("birds", "Birds"),
     "Nature": ("nature", "Nature"),
+    "Street": ("street", "Street"),
 }
 
 
