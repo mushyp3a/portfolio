@@ -106,7 +106,7 @@
         "iso" $iso
         "species" $sp
         "scientificName" $sci
-        "image" (partial "photo-image-src.html" (dict "page" . "quality" "original"))
+        "image" (partial "photo-image-src.html" (dict "page" . "quality" "preview"))
     ) }}
 {{ end }}
 <script type="application/json" id="photo-data">{{ $photos | jsonify | safeJS }}</script>

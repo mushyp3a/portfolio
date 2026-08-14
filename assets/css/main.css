@@ -1014,7 +1014,7 @@ a {
 
 .mosaic {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     grid-auto-rows: 0;
     grid-auto-flow: dense;
     column-gap: 8px;
@@ -1089,11 +1089,35 @@ a {
 }
 
 .lb-frame img {
-    display: block;
+ display: block;
     max-width: 100%;
     max-height: calc(100vh - 7rem);
     width: auto;
     height: auto;
+    opacity: 1;
+    transition: opacity .15s ease;
+}
+
+.lb-frame.is-loading img {
+    opacity: .25;
+}
+
+.lb-frame.is-loading::after {
+    content: "";
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    margin: -1rem 0 0 -1rem;
+    top: 50%;
+    left: 50%;
+    border: 3px solid rgba(0, 0, 0, .15);
+    border-top-color: rgba(0, 0, 0, .6);
+    border-radius: 50%;
+    animation: lb-spin .7s linear infinite;
+}
+
+@keyframes lb-spin {
+    to { transform: rotate(360deg); }
 }
 
 .lb-panel {
@@ -1216,13 +1240,7 @@ a {
     color: var(--muted);
 }
 
-@media (max-width: 1200px) {
-    .mosaic {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 900px) {
+@media (max-width: 1300px) {
     .mosaic {
         grid-template-columns: repeat(3, 1fr);
     }

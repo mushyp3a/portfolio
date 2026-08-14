@@ -222,6 +222,13 @@
     function render() {
         var p = lbVisible[lbIndex];
         if (!p) return;
+        var frame = lbImg.closest(".lb-frame");
+        var token = p.permalink;
+        frame.classList.add("is-loading");
+        lbImg.onload = function () {
+            if (lbVisible[lbIndex] && lbVisible[lbIndex].permalink === token) frame.classList.remove("is-loading");
+        };
+        lbImg.onerror = lbImg.onload;
         lbImg.src = p.image || "";
         lbImg.alt = p.title || "";
         lbTitle.textContent = p.title || "";
