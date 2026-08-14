@@ -735,6 +735,7 @@ a {
 .photo-single {
     max-width: 920px;
     margin: 0 auto;
+    padding: 2.5rem 1.5rem 3rem;
 }
 
 .photo-eyebrow {
@@ -1253,6 +1254,23 @@ a {
 }
 
 @media (max-width: 760px) {
+    .photo-single {
+        padding: 1.5rem 1.25rem 2.5rem;
+    }
+
+    .photo-meta {
+        grid-template-columns: 1fr;
+        gap: .75rem 0;
+    }
+
+    .photo-meta dt {
+        margin-bottom: .15rem;
+    }
+
+    .photo-meta dd {
+        overflow-wrap: break-word;
+    }
+
     .photo-layout {
         flex-direction: column;
     }
