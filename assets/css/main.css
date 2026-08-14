@@ -1064,7 +1064,7 @@ a {
 
 .lightbox.open {
     display: grid;
-    grid-template-columns: 1fr minmax(280px, 360px);
+    grid-template-columns: 1fr auto;
 }
 
 .lb-stage {
@@ -1128,6 +1128,8 @@ a {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    min-width: 280px;
+    max-width: min(90vw, 460px);
 }
 
 .lb-title {
@@ -1138,10 +1140,12 @@ a {
 
 .lb-meta {
     display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: .5rem 1.25rem;
+    grid-template-columns: 1fr;
+    gap: 1rem 0;
     margin: 0;
     font-size: .92rem;
+    width: max-content;
+    max-width: 100%;
 }
 
 .lb-meta dt {
@@ -1149,11 +1153,12 @@ a {
     font-size: .7rem;
     text-transform: uppercase;
     letter-spacing: .06em;
-    align-self: center;
+    margin-bottom: .15rem;
 }
 
 .lb-meta dd {
     margin: 0;
+    overflow-wrap: break-word;
 }
 
 .lb-nav {
@@ -1200,6 +1205,7 @@ a {
 
 .lb-btn {
     position: absolute;
+    z-index: 2;
     background: rgba(255, 255, 255, .1);
     border: 0;
     color: #fff;
