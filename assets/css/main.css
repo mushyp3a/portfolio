@@ -19,7 +19,7 @@
 /* dark mode colours */
 
 :root[data-theme="dark"] {
-    --bg: #282828;
+    --bg: #151719;
     --surface: #1d2021;
     --footer-bg: #1d2021;
     --text: #e7e9ee;
