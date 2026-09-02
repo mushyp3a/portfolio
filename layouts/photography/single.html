@@ -1,0 +1,78 @@
+{{ define "main" }}
+
+<article class="photo-single">
+
+    <header class="photo-single-head">
+        <p class="photo-eyebrow">
+            <a href="{{ .CurrentSection.RelPermalink }}">{{ .CurrentSection.Title }}</a>
+        </p>
+        <h1>{{ .Title }}</h1>
+    </header>
+
+    <div class="photo-frame">
+        {{ partial "photo-image.html" (dict "page" . "quality" "preview") }}
+    </div>
+
+    {{ with .Params.description }}
+        <p class="photo-description">{{ . }}</p>
+    {{ end }}
+
+    <dl class="photo-meta">
+        {{ with .Params.species }}<div><dt>Species</dt><dd>{{ . }}</dd></div>{{ end }}
+        {{ with .Params.scientificName }}<div><dt>Scientific name</dt><dd><em>{{ . }}</em></dd></div>{{ end }}
+        {{ with .Params.date }}<div><dt>Date</dt><dd>{{ .Format "2 January 2006" }}</dd></div>{{ end }}
+        {{ with .Params.location }}<div><dt>Location</dt><dd>{{ . }}</dd></div>{{ end }}
+        {{ with .Params.camera }}<div><dt>Camera</dt><dd>{{ . }}</dd></div>{{ end }}
+        {{ with .Params.lens }}<div><dt>Lens</dt><dd>{{ . }}</dd></div>{{ end }}
+        {{ with .Params.focalLength }}<div><dt>Focal length</dt><dd>{{ . }}mm</dd></div>{{ end }}
+        {{ with .Params.aperture }}<div><dt>Aperture</dt><dd>f/{{ . }}</dd></div>{{ end }}
+        {{ with .Params.shutterSpeed }}<div><dt>Shutter speed</dt><dd>{{ . }}</dd></div>{{ end }}
+        {{ with .Params.iso }}<div><dt>ISO</dt><dd>{{ . }}</dd></div>{{ end }}
+    </dl>
+
+    {{ $siblings := .CurrentSection.RegularPages.ByDate.Reverse }}
+    {{ $prev := "" }}
+    {{ $next := "" }}
+    {{ range $i, $p := $siblings }}
+        {{ if eq $p.RelPermalink $.RelPermalink }}
+            {{ if gt $i 0 }}{{ $prev = index $siblings (sub $i 1) }}{{ end }}
+            {{ if lt $i (sub (len $siblings) 1) }}{{ $next = index $siblings (add $i 1) }}{{ end }}
+        {{ end }}
+    {{ end }}
+
+    <nav class="photo-nav" aria-label="Photograph navigation">
+        {{ with $prev }}<a class="prev" href="{{ .RelPermalink }}">
+            <span class="label">Previous</span>{{ .Title }}
+        </a>{{ end }}
+        {{ with $next }}<a class="next" href="{{ .RelPermalink }}">
+            <span class="label">Next</span>{{ .Title }}
+        </a>{{ end }}
+    </nav>
+
+    {{ $related := slice }}
+    {{ range where site.RegularPages "Section" "photography" }}
+        {{ if ne .RelPermalink $.RelPermalink }}
+            {{ if or (and $.Params.species .Params.species (eq $.Params.species .Params.species))
+                      (and $.Params.location .Params.location (eq $.Params.location .Params.location)) }}
+                {{ $related = $related | append . }}
+            {{ end }}
+        {{ end }}
+    {{ end }}
+
+    {{ with $related }}
+        <section class="related">
+            <h2>Related photographs</h2>
+            <div class="related-grid">
+                {{ range first 4 . }}
+                    <a class="related-item" href="{{ .RelPermalink }}">
+                        {{ partial "photo-image.html" (dict "page" .) }}
+                        <span>{{ .Title }}</span>
+                    </a>
+                {{ end }}
+            </div>
+        </section>
+    {{ end }}
+
+</article>
+
+{{ end }}

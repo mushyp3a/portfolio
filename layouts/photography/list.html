@@ -1,0 +1,118 @@
+ {{ define "main" }}
+
+{{ if ne .RelPermalink "/photography/" }}
+    {{/* Album sub-pages are removed — send them to the unified grid, filtered. */}}
+    {{ $slug := .RelPermalink }}
+    {{ $slug = strings.TrimPrefix "/photography/" $slug }}
+    {{ $slug = strings.TrimSuffix "/" $slug }}
+    <meta http-equiv="refresh" content="0; url={{ relURL (printf "/photography/#%s" $slug) }}">
+    <script>window.location.replace("/photography/#{{ $slug }}");</script>
+    <p class="redirect-note">Redirecting to <a href="/photography/#{{ $slug }}">the gallery</a>&hellip;</p>
+{{ else }}
+
+<section class="photo-layout">
+
+    <aside class="photo-sidebar" aria-label="Photography navigation">
+        <h1 class="sidebar-title">Photography</h1>
+
+        <nav class="sidebar-nav" aria-label="Albums">
+            {{ with .Site.GetPage "photography/featured" }}
+                <a class="album-link" href="#featured" data-filter="featured">
+                    <span class="album-name">Featured</span>
+                    <span class="album-count">{{ len .RegularPages }}</span>
+                </a>
+            {{ end }}
+            {{ range .Sections }}
+                {{ if ne .RelPermalink "/photography/featured/" }}
+                    {{ $slug := strings.TrimPrefix "/photography/" .RelPermalink }}{{ $slug = strings.TrimSuffix "/" $slug }}
+                    <a class="album-link" href="#{{ $slug }}" data-filter="{{ $slug }}">
+                        <span class="album-name">{{ .Title }}</span>
+                        <span class="album-count">{{ len .RegularPages }}</span>
+                    </a>
+                {{ end }}
+            {{ end }}
+        </nav>
+
+        <hr class="sidebar-rule">
+
+        <details class="sidebar-filters">
+            <summary>Filters</summary>
+            <div class="facets" aria-label="Filter photographs">
+                <div class="facet">
+                    <h3>Camera</h3>
+                    <div class="facet-options" data-facet="camera"></div>
+                </div>
+                <div class="facet">
+                    <h3>Lens</h3>
+                    <div class="facet-options" data-facet="lens"></div>
+                </div>
+                <div class="facet">
+                    <h3>Focal length (mm)</h3>
+                    <div class="facet-range">
+                        <input type="number" min="0" inputmode="numeric" data-focal-min placeholder="min">
+                        <span>&ndash;</span>
+                        <input type="number" min="0" inputmode="numeric" data-focal-max placeholder="max">
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="filters-reset">Reset filters</button>
+        </details>
+    </aside>
+
+    <div class="photo-main">
+        <div class="mosaic" id="mosaic">
+            {{ range .RegularPagesRecursive.ByDate.Reverse }}
+                {{ $album := strings.TrimPrefix "/photography/" .CurrentSection.RelPermalink }}{{ $album = strings.TrimSuffix "/" $album }}
+                <a class="mosaic-item" href="{{ .RelPermalink }}" data-permalink="{{ .RelPermalink }}"
+                   data-album="{{ $album }}"
+                   data-location="{{ .Params.location }}"
+                   data-year="{{ .Date.Year }}"
+                   data-camera="{{ .Params.camera }}"
+                   data-lens="{{ .Params.lens }}"
+                   data-focal="{{ .Params.focalLength }}">
+                    {{ partial "photo-image.html" (dict "page" .) }}
+                </a>
+            {{ end }}
+        </div>
+        <p class="mosaic-count" data-count aria-live="polite"></p>
+    </div>
+
+</section>
+
+{{ $photos := slice }}
+{{ range .RegularPagesRecursive.ByDate.Reverse }}
+    {{ $album := strings.TrimPrefix "/photography/" .CurrentSection.RelPermalink }}{{ $album = strings.TrimSuffix "/" $album }}
+    {{ $date := "" }}{{ with .Params.date }}{{ $date = .Format "2 January 2006" }}{{ end }}
+    {{ $loc := "" }}{{ with .Params.location }}{{ $loc = . }}{{ end }}
+    {{ $cam := "" }}{{ with .Params.camera }}{{ $cam = . }}{{ end }}
+    {{ $lens := "" }}{{ with .Params.lens }}{{ $lens = . }}{{ end }}
+    {{ $foc := "" }}{{ with .Params.focalLength }}{{ $foc = . }}{{ end }}
+    {{ $ap := "" }}{{ with .Params.aperture }}{{ $ap = . }}{{ end }}
+    {{ $ss := "" }}{{ with .Params.shutterSpeed }}{{ $ss = . }}{{ end }}
+    {{ $iso := "" }}{{ with .Params.iso }}{{ $iso = . }}{{ end }}
+    {{ $sp := "" }}{{ with .Params.species }}{{ $sp = . }}{{ end }}
+    {{ $sci := "" }}{{ with .Params.scientificName }}{{ $sci = . }}{{ end }}
+    {{ $photos = $photos | append (dict
+        "title" .Title
+        "permalink" .RelPermalink
+        "album" $album
+        "date" $date
+        "location" $loc
+        "camera" $cam
+        "lens" $lens
+        "focalLength" $foc
+        "aperture" $ap
+        "shutterSpeed" $ss
+        "iso" $iso
+        "species" $sp
+        "scientificName" $sci
+        "image" (partial "photo-image-src.html" (dict "page" . "quality" "preview"))
+    ) }}
+{{ end }}
+<script type="application/json" id="photo-data">{{ $photos | jsonify | safeJS }}</script>
+
+{{ partial "photo-lightbox.html" . }}
+
+{{ end }}
+
+{{ end }}

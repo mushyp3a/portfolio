@@ -1,0 +1,7 @@
+<figcaption class="photo-caption">
+    <a class="photo-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+    <span class="photo-meta">
+        {{ with .Params.focalLength }}{{ . }}mm{{ end }}{{ with .Params.shutterSpeed }}{{ if $.Params.focalLength }} &middot; {{ end }}{{ . }}{{ end }}
+    </span>
+    {{ with .Params.date }}<span class="photo-meta">{{ .Format "2 Jan 2006" }}</span>{{ end }}
+</figcaption>

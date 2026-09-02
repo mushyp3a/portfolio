@@ -11,15 +11,17 @@
     --max: 1200px;
     --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px rgba(0, 0, 0, .06);
     --shadow-hover: 0 4px 8px rgba(0, 0, 0, .06), 0 16px 40px rgba(0, 0, 0, .10);
+    --frame: #ffffff;
+    --frame-pad: 1rem;
     --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 /* dark mode colours */
 
 :root[data-theme="dark"] {
-    --bg: #0f1115;
-    --surface: #1a1d23;
-    --footer-bg: #15181d;
+    --bg: #151719;
+    --surface: #1d2021;
+    --footer-bg: #1d2021;
     --text: #e7e9ee;
     --muted: #9aa1ad;
     --border: #2a2f37;
@@ -27,6 +29,8 @@
     --accent-hover: #f5c64b;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .4);
     --shadow-hover: 0 4px 8px rgba(0, 0, 0, .35), 0 16px 40px rgba(0, 0, 0, .5);
+    --frame: #f4f4f1;
+    --frame-pad: 1rem;
 }
 
 * {
@@ -141,7 +145,7 @@ a {
     margin: 0 auto;
     padding: 4rem 1.5rem 5rem;
     /* keep footer down on short pages */
-    min-height: 70vh;
+    min-height: 50vh;
 }
 
 /* footer */
@@ -422,3 +426,921 @@ a {
         transform: none;
     }
 }
+
+/* ----------------------------------------------------------------------------
+   Photography
+   Restrained, editorial, image-led. Photographs sit in light mats; the
+   interface chrome is kept to a minimum.
+---------------------------------------------------------------------------- */
+
+/* album index row (parent /photography/ only) */
+
+.albums {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin: 1.25rem 0 0;
+}
+
+.album-link {
+    text-decoration: none;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: .4rem .9rem;
+    font-size: .9rem;
+    transition: border-color .15s ease, color .15s ease;
+}
+
+.album-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* filters */
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: flex-end;
+    margin-top: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.filters label {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+}
+
+.filters select {
+    font: inherit;
+    font-size: .9rem;
+    padding: .4rem .55rem;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.filters select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.filters-reset {
+    margin-top: 1rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.filters-reset:hover {
+    color: var(--text);
+}
+
+.filters-reset:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.filters-count {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: .85rem;
+    white-space: nowrap;
+}
+
+/* gallery (masonry via CSS columns; mixed aspect ratios preserved) */
+
+.gallery {
+    column-width: 300px;
+    column-gap: 1.75rem;
+    margin-top: 2.5rem;
+}
+
+.photo {
+    break-inside: avoid;
+    margin: 0 0 1.75rem;
+    background: var(--frame);
+    border: 1px solid var(--border);
+    padding: var(--frame-pad);
+}
+
+.photo-link {
+    display: block;
+}
+
+.photo-img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.photo-caption {
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    line-height: 1.1;
+}
+
+/* Tiles sit on a white mat in both themes, so captions stay dark there. */
+.photo .photo-title {
+    font-weight: 600;
+    font-size: .8rem;
+    line-height: 1.1;
+    margin: 0;
+    text-decoration: none;
+    color: #1a1a1a;
+}
+
+.photo .photo-title:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.photo .photo-meta {
+    color: #555;
+    font-size: .68rem;
+    line-height: 1.1;
+    margin: 0;
+}
+
+/* Tiles sit on a white mat in both themes, so captions stay dark there. */
+.photo .photo-title {
+    font-weight: 600;
+    font-size: .85rem;
+    line-height: 1.15;
+    text-decoration: none;
+    color: #1a1a1a;
+}
+
+.photo .photo-title:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.photo .photo-meta {
+    color: #555;
+    font-size: .72rem;
+    line-height: 1.2;
+}
+
+/* album groups on the broad photography page */
+.albums-view {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+.albums-view[hidden] {
+    display: none;
+}
+
+.album-group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.album-group-head h2 {
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.album-group-head a {
+    font-size: .85rem;
+    text-decoration: none;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.album-group-head a:hover {
+    color: var(--text);
+}
+
+.album-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.75rem;
+}
+
+/* bigger, evenly cropped square previews on the main photography page */
+.album-preview .photo-img {
+    aspect-ratio: 1 / 1;
+    height: auto;
+    object-fit: cover;
+}
+
+/* search / filter all photographs */
+.search-toggle {
+    margin-top: 2.5rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+}
+
+.search-toggle:hover {
+    border-bottom-color: var(--accent);
+}
+
+.photo-search[hidden] {
+    display: none;
+}
+
+.photo-search {
+    margin-top: 2.5rem;
+}
+
+.facets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 2.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    margin-bottom: 2rem;
+}
+
+.facet {
+    min-width: 180px;
+}
+
+.facet > h3 {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin: 0 0 .6rem;
+}
+
+.facet-options {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    max-height: 12rem;
+    overflow: auto;
+}
+
+.facet label {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .9rem;
+    cursor: pointer;
+}
+
+.facet label input {
+    accent-color: var(--accent);
+}
+
+.facet-range {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.facet-range input {
+    width: 5rem;
+    padding: .35rem .5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+}
+
+/* single photograph page */
+
+.photo-single {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 3rem;
+}
+
+.photo-eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+}
+
+.photo-eyebrow a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.photo-eyebrow a:hover {
+    color: var(--text);
+}
+
+.photo-single h1 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
+}
+
+.photo-frame {
+    background: var(--frame);
+    border: 1px solid var(--border);
+    padding: var(--frame-pad);
+}
+
+.photo-description {
+    margin: 1.5rem 0 0;
+    max-width: 60ch;
+    color: var(--muted);
+}
+
+.photo-meta {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .55rem 1.5rem;
+    margin: 2rem 0 0;
+    max-width: 60ch;
+    font-size: .95rem;
+}
+
+.photo-meta > div {
+    display: contents;
+}
+
+.photo-meta dt {
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    align-self: center;
+}
+
+.photo-meta dd {
+    margin: 0;
+}
+
+/* prev / next */
+
+.photo-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 3rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.photo-nav a {
+    text-decoration: none;
+    color: var(--text);
+    font-size: .95rem;
+}
+
+.photo-nav a:hover {
+    text-decoration: underline;
+}
+
+.photo-nav .label {
+    display: block;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: .25rem;
+}
+
+.photo-nav .next {
+    text-align: right;
+    margin-left: auto;
+}
+
+/* related */
+
+.related {
+    margin: 3.5rem 0 0;
+}
+
+.related h2 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin: 0 0 1.25rem;
+    font-weight: 700;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.related-item {
+    text-decoration: none;
+    color: inherit;
+}
+
+.related-item .photo-img {
+    background: var(--frame);
+    border: 1px solid var(--border);
+    padding: .3rem;
+    transition: border-color .15s ease;
+}
+
+.related-item:hover .photo-img {
+    border-color: var(--accent);
+}
+
+.related-item span {
+    display: block;
+    margin-top: .45rem;
+    font-size: .8rem;
+    color: var(--muted);
+}
+
+@media (max-width: 600px) {
+    .filters {
+        gap: .9rem 1rem;
+    }
+
+    .filters-count {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+/* ----------------------------------------------------------------------------
+   Photography — full-bleed mosaic, sidebar, lightbox
+---------------------------------------------------------------------------- */
+
+/* let the photography pages use the whole viewport (baseof sets a 1200px cap) */
+.site-main--photo {
+    max-width: none;
+    padding: 0;
+}
+
+.photo-layout {
+    display: flex;
+    align-items: flex-start;
+    min-height: calc(100vh - 4.5rem);
+}
+
+/* sidebar */
+.photo-sidebar {
+    position: sticky;
+    top: 4.5rem;
+    flex: 0 0 240px;
+    align-self: stretch;
+    height: calc(100vh - 4.5rem);
+    overflow-y: auto;
+    padding: 2rem 1.5rem;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.sidebar-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 1.5rem;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+
+.sidebar-title:hover {
+    color: var(--accent);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+
+.album-link {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .5rem .65rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+    transition: background .15s ease, color .15s ease;
+}
+
+.album-link:hover {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.album-link.is-active {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent-hover);
+}
+
+.album-count {
+    color: var(--muted);
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.album-link.is-active .album-count {
+    color: var(--accent-hover);
+}
+
+.sidebar-rule {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 1.25rem 0;
+}
+
+.sidebar-filters summary {
+    cursor: pointer;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    font-weight: 700;
+    padding: .35rem 0;
+}
+
+.sidebar-filters summary:hover {
+    color: var(--text);
+}
+
+.sidebar-filters .facets {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    padding: 1rem 0 0;
+    margin: 0;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.sidebar-filters .facet {
+    min-width: 0;
+}
+
+.sidebar-filters .filters-reset {
+    margin-top: 1rem;
+}
+
+/* main mosaic */
+.photo-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 1rem;
+}
+
+.mosaic {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 0;
+    grid-auto-flow: dense;
+    column-gap: 8px;
+    row-gap: 8px;
+}
+
+.mosaic-item {
+    display: block;
+    overflow: hidden;
+    text-decoration: none;
+    background: transparent;
+}
+
+.mosaic-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform .5s ease, filter .5s ease;
+}
+
+.mosaic-item:hover img,
+.mosaic-item:focus-visible img {
+    transform: scale(1.04);
+    filter: brightness(1.05);
+}
+
+.mosaic-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.mosaic-count {
+    margin: 1rem 0 0;
+    color: var(--muted);
+    font-size: .85rem;
+}
+
+/* lightbox */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    background: rgba(18, 18, 18, .92);
+    backdrop-filter: blur(4px);
+}
+
+.lightbox.open {
+    display: grid;
+    grid-template-columns: 1fr auto;
+}
+
+.lb-stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    min-width: 0;
+    min-height: 0;
+}
+
+.lb-frame {
+    margin: 0;
+    background: #fff;
+    padding: .75rem;
+    border-radius: 2px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+}
+
+.lb-frame img {
+ display: block;
+    max-width: 100%;
+    max-height: calc(100vh - 7rem);
+    width: auto;
+    height: auto;
+    opacity: 1;
+    transition: opacity .15s ease;
+}
+
+.lb-frame.is-loading img {
+    opacity: .25;
+}
+
+.lb-frame.is-loading::after {
+    content: "";
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    margin: -1rem 0 0 -1rem;
+    top: 50%;
+    left: 50%;
+    border: 3px solid rgba(0, 0, 0, .15);
+    border-top-color: rgba(0, 0, 0, .6);
+    border-radius: 50%;
+    animation: lb-spin .7s linear infinite;
+}
+
+@keyframes lb-spin {
+    to { transform: rotate(360deg); }
+}
+
+.lb-panel {
+    background: var(--surface);
+    color: var(--text);
+    padding: 2.5rem 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 280px;
+    max-width: min(90vw, 460px);
+}
+
+.lb-title {
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.lb-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem 0;
+    margin: 0;
+    font-size: .92rem;
+    width: max-content;
+    max-width: 100%;
+}
+
+.lb-meta dt {
+    color: var(--muted);
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .15rem;
+}
+
+.lb-meta dd {
+    margin: 0;
+    overflow-wrap: break-word;
+}
+
+.lb-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.lb-textbtn {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.lb-textbtn:hover:not(:disabled) {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+.lb-textbtn:disabled {
+    color: var(--muted);
+    cursor: default;
+}
+
+.lb-textbtn.lb-next {
+    margin-left: auto;
+    text-align: right;
+}
+
+.lb-open {
+    font-size: .85rem;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.lb-open:hover {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.lb-btn {
+    position: absolute;
+    z-index: 2;
+    background: rgba(255, 255, 255, .1);
+    border: 0;
+    color: #fff;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 1.6rem;
+    line-height: 1;
+    transition: background .15s ease;
+}
+
+.lb-btn:hover {
+    background: rgba(255, 255, 255, .25);
+}
+
+.lb-close {
+    top: 1rem;
+    right: 1rem;
+}
+
+.lb-prev {
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lb-next {
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.redirect-note {
+    padding: 4rem 1.5rem;
+    color: var(--muted);
+}
+
+@media (max-width: 1300px) {
+    .mosaic {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .photo-single {
+        padding: 1.5rem 1.25rem 2.5rem;
+    }
+
+    .photo-meta {
+        grid-template-columns: 1fr;
+        gap: .75rem 0;
+    }
+
+    .photo-meta dt {
+        margin-bottom: .15rem;
+    }
+
+    .photo-meta dd {
+        overflow-wrap: break-word;
+    }
+
+    .photo-layout {
+        flex-direction: column;
+    }
+
+    .photo-sidebar {
+        position: static;
+        flex-basis: auto;
+        height: auto;
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .5rem 1rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .sidebar-title {
+        margin: 0 1rem 0 0;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: .4rem;
+    }
+
+    .sidebar-rule {
+        display: none;
+    }
+
+    .sidebar-filters {
+        width: 100%;
+    }
+
+    .mosaic {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .lightbox.open {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+    }
+
+    .lb-stage {
+        padding: 1rem;
+    }
+
+    .lb-frame img {
+        max-height: 50vh;
+    }
+
+    .lb-panel {
+        max-height: 45vh;
+        padding: 1.5rem;
+        gap: 1rem;
+    }
+
+    .lb-btn {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1.2rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mosaic-item img {
+        transition: none;
+    }
+}
+

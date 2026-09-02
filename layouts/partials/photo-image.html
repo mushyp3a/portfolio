@@ -1,0 +1,14 @@
+ {{/*
+   Resolves the image source for a photograph.
+
+   This is the ONLY place in the site that knows where images come from,
+   so changing providers is a one-file edit. The URL itself is computed by
+   partial "photo-image-src.html" (shared with the lightbox).
+
+   Production: each photo carries an immichId and hugo.toml sets
+   immichBaseURL / immichOriginalURL to your reverse-proxied Immich endpoint,
+   so the <img> is served straight from Immich. No API key ever ships to the
+   client. The old `image` placeholder is no longer used.
+ */}}
+
+ <img class="photo-img" src="{{ partial "photo-image-src.html" . }}" alt="{{ .page.Title }}" loading="lazy" decoding="async">

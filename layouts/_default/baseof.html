@@ -47,7 +47,7 @@
     </button>
 </header>
 
-<main class="site-main">
+<main class="site-main{{ if eq .Section "photography" }} site-main--photo{{ end }}">
     {{ block "main" . }}{{ end }}
 </main>
 
