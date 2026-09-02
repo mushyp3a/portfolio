@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Procedural Universe Explorer</title>
+<style>
+html,body{margin:0;height:100%;background:#05060a;color:#cfe3ff;
+  font-family:ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+#container{position:fixed;inset:0}
+.panel{position:fixed;background:rgba(10,14,24,0.82);border:1px solid #1d2a44;
+  border-radius:8px;padding:10px 12px;backdrop-filter:blur(4px);font-size:12px;line-height:1.5}
+#info{top:12px;right:12px;width:280px;max-height:72vh;overflow:auto}
+#search{top:12px;left:12px;width:248px;max-height:90vh;overflow:auto}
+#breadcrumb{bottom:12px;left:12px}
+#legend{bottom:12px;right:12px;width:200px}
+#controls{bottom:12px;left:272px;width:232px}
+#tooltip{position:fixed;display:none;pointer-events:none;background:rgba(10,14,24,0.9);
+  border:1px solid #2a4a7a;border-radius:6px;padding:4px 7px;font-size:11px;color:#cfe3ff;z-index:10}
+h3{margin:0 0 6px;font-size:13px;color:#9fd0ff}
+hr{border:none;border-top:1px solid #1d2a44;margin:8px 0}
+table{border-collapse:collapse;width:100%}
+td{padding:1px 4px;vertical-align:top}
+td.k{color:#7f9bc4;width:44%}
+input[type=number],input[type=text]{width:72px;background:#0b1120;color:#cfe3ff;
+  border:1px solid #1d2a44;border-radius:4px;padding:2px 4px}
+input.wide{width:90px}
+button{background:#16335c;color:#cfe3ff;border:1px solid #2a4a7a;border-radius:4px;
+  padding:3px 8px;cursor:pointer;font-family:inherit}
+button:hover{background:#1d447d}
+button:disabled{opacity:0.5;cursor:not-allowed}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+#matchList{margin-top:6px;max-height:180px;overflow:auto}
+#matchList div{cursor:pointer;padding:1px 3px;border-radius:3px}
+#matchList div:hover{background:#16335c}
+label{display:inline-block;margin:1px 4px 1px 0}
+.row{display:flex;gap:6px;align-items:center;margin:3px 0;flex-wrap:wrap}
+.row span{white-space:nowrap}
+#cfgToggle{cursor:pointer;user-select:none;color:#9fd0ff;font-weight:bold}
+#cfgBody{display:none;margin-top:6px}
+#cfgBody.open{display:block}
+#regenBtn{margin-top:8px;width:100%}
+#statsLine{margin-top:5px;color:#7f9bc4;font-size:11px}
+#loading{position:fixed;inset:0;z-index:100;background:#05060a;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#loading h2{color:#9fd0ff;margin:0;font-size:16px;font-family:ui-monospace,Menlo,Consolas,monospace}
+#loading-detail{color:#7f9bc4;font-size:11px;min-height:14px}
+.spinner{width:36px;height:36px;border:3px solid #1d2a44;border-top-color:#9fd0ff;
+  border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.body-item{cursor:pointer;padding:2px 5px;border-radius:3px;display:flex;gap:6px;align-items:center}
+.body-item:hover{background:#16335c}
+.body-item.sel{background:#1d447d}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <h2>Generating universe…</h2>
+  <div id="loading-detail"></div>
+</div>
+
+<div id="container"></div>
+<div id="tooltip"></div>
+
+<div id="search" class="panel">
+  <a href="/projects/universe/" style="display:block;margin-bottom:8px;color:#7f9bc4;font-size:11px;text-decoration:none;">← back to portfolio</a>
+  <h3>Search / Filter</h3>
+  <div class="row"><input id="sysId" type="text" placeholder="system id"/><button id="goId">Go</button></div>
+  <div class="row"><span>Met min</span><input id="metMin" type="number" step="0.05" min="0" max="1" value="0"/></div>
+  <div class="row"><span>Met max</span><input id="metMax" type="number" step="0.05" min="0" max="1" value="1"/></div>
+  <div class="row"><span>Min planets</span><input id="minP" type="number" min="0" max="20" value="0"/></div>
+  <div class="row"><span>Spectral</span><span id="specBoxes"></span></div>
+  <div class="row"><button id="applyF">Apply</button><span id="matchCount"></span></div>
+  <div id="matchList"></div>
+
+  <hr/>
+
+  <div id="cfgToggle">⚙ Generator Config ▾</div>
+  <div id="cfgBody">
+    <div class="row"><span>Seed</span><input id="cfg-seed" type="number" value="125" class="wide"/></div>
+    <div class="row"><span>Universe size</span><input id="cfg-universeSize" type="number" value="1000" class="wide"/></div>
+    <div class="row"><span>Noise scale</span><input id="cfg-noiseScale" type="number" step="0.001" min="0.001" value="0.005" class="wide"/></div>
+    <div class="row"><span>Noise octaves</span><input id="cfg-octaves" type="number" min="1" max="6" value="1" class="wide"/></div>
+    <div class="row"><span>Lattice res</span><input id="cfg-latticeRes" type="number" min="10" max="80" value="50" class="wide"/></div>
+    <div class="row"><span>Density thresh</span><input id="cfg-densityThresh" type="number" step="0.05" min="0" max="1" value="0.5" class="wide"/></div>
+    <div class="row"><span>H thresh</span><input id="cfg-HThresh" type="number" step="0.05" min="0" max="1" value="0.3" class="wide"/></div>
+    <div class="row"><span>He thresh</span><input id="cfg-HeThresh" type="number" step="0.05" min="0" max="1" value="0.3" class="wide"/></div>
+    <div class="row"><span>Max stars/sys</span><input id="cfg-maxStars" type="number" min="1" max="3" value="3" class="wide"/></div>
+    <div class="row"><span>Min orbit (AU)</span><input id="cfg-minOrbit" type="number" step="0.01" min="0.01" value="0.05" class="wide"/></div>
+    <div class="row"><span>Max orbit (AU)</span><input id="cfg-maxOrbit" type="number" min="1" value="30" class="wide"/></div>
+    <div class="row"><span>Rotation</span><input id="cfg-rotSpeed" type="number" step="0.1" min="0" max="5" value="0.5" class="wide"/></div>
+    <button id="regenBtn">↻ Regenerate</button>
+    <div id="statsLine"></div>
+  </div>
+</div>
+
+<div id="info" class="panel">Click a system to explore.</div>
+
+<div id="breadcrumb" class="panel">
+  <span id="crumb">Universe</span>
+  <button id="backBtn" style="display:none">&#8592; Back</button>
+</div>
+
+<div id="controls" class="panel">
+  <h3>Controls</h3>
+  <div><b>Space</b>: center camera</div>
+  <div>Left-drag: orbit &middot; Wheel: zoom</div>
+  <div>Right-drag: pan</div>
+  <div>Click system to fly in &middot; <b>Esc</b>: back</div>
+</div>
+
+<div id="legend" class="panel">
+  <h3>Legend</h3>
+  <div><span class="sw" style="background:#3a6bff"></span>low metallicity</div>
+  <div><span class="sw" style="background:#ff9b3a"></span>high metallicity</div>
+  <div style="margin-top:4px"><span class="sw" style="background:#4caf50"></span>terrestrial</div>
+  <div><span class="sw" style="background:#64b5f6"></span>ice giant</div>
+  <div><span class="sw" style="background:#ff7043"></span>gas giant</div>
+  <div style="margin-top:4px">Lines = star → planet → moon</div>
+</div>
+
+<script src="./viewer/three.min.js"></script>
+<script src="./viewer/OrbitControls.js"></script>
+<script>
+'use strict';
+
+// =========================
+// prng
+// =========================
+
+// xorshift32 — fast seeded deterministic rng
+function makePRNG(seed) {
+  let s = ((seed | 0) >>> 0) || 1;
+  function next() {
+    s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
+    return (s >>> 0) / 4294967296;
+  }
+  return {
+    next,
+    uniform(a, b) { return a + next() * (b - a); },
+    int(lo, hi)   { return lo + ((next() * (hi - lo)) | 0); }, // exclusive upper bound
+    shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = (next() * (i + 1)) | 0;
+        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+    },
+    poisson(lam) {
+      if (lam <= 0) return 0;
+      // knuth algorithm — multiply uniforms until product falls below e^-lambda
+      const L = Math.exp(-Math.min(lam, 500));
+      let k = 0, p = 1;
+      do { k++; p *= next(); } while (p > L && k < 200);
+      return k - 1;
+    }
+  };
+}
+
+// =========================
+// perlin noise
+// =========================
+
+// ken perlin's reference permutation table, doubled to avoid index wrapping
+const _PBASE = [
+  151,160,137, 91, 90, 15,131, 13,201, 95, 96, 53,194,233,  7,225,
+  140, 36,103, 30, 69,142,  8, 99, 37,240, 21, 10, 23,190,  6,148,
+  247,120,234, 75,  0, 26,197, 62, 94,252,219,203,117, 35, 11, 32,
+   57,177, 33, 88,237,149, 56, 87,174, 20,125,136,171,168, 68,175,
+   74,165, 71,134,139, 48, 27,166, 77,146,158,231, 83,111,229,122,
+   60,211,133,230,220,105, 92, 41, 55, 46,245, 40,244,102,143, 54,
+   65, 25, 63,161,  1,216, 80, 73,209, 76,132,187,208, 89, 18,169,
+  200,196,135,130,116,188,159, 86,164,100,109,198,173,186,  3, 64,
+   52,217,226,250,124,123,  5,202, 38,147,118,126,255, 82, 85,212,
+  207,206, 59,227, 47, 16, 58, 17,182,189, 28, 42,223,183,170,213,
+  119,248,152,  2, 44,154,163, 70,221,153,101,155,167, 43,172,  9,
+  129, 22, 39,253, 19, 98,108,110, 79,113,224,232,178,185,112,104,
+  218,246, 97,228,251, 34,242,193,238,210,144, 12,191,179,162,241,
+   81, 51,145,235,249, 14,239,107, 49,192,214, 31,181,199,106,157,
+  184, 84,204,176,115,121, 50, 45,127,  4,150,254,138,236,205, 93,
+  222,114, 67, 29, 24, 72,243,141,128,195, 78, 66,215, 61,156,180
+];
+const _P = new Uint8Array(512);
+for (let i = 0; i < 256; i++) _P[i] = _P[i + 256] = _PBASE[i];
+
+// 6t^5 - 15t^4 + 10t^3 — zero first and second derivatives at t=0 and t=1
+function _fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+function _lp(t, a, b) { return a + t * (b - a); }
+function _grad(h, x, y, z) {
+  h &= 15;
+  const u = h < 8 ? x : y, v = h < 4 ? y : (h === 12 || h === 14 ? x : z);
+  return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+}
+function _raw3(x, y, z) {
+  const xi = Math.floor(x) & 255, yi = Math.floor(y) & 255, zi = Math.floor(z) & 255;
+  const xf = x - Math.floor(x), yf = y - Math.floor(y), zf = z - Math.floor(z);
+  const u = _fade(xf), v = _fade(yf), w = _fade(zf);
+  const A = _P[xi]+yi, B = _P[xi+1]+yi;
+  const AA = _P[A]+zi, AB = _P[A+1]+zi, BA = _P[B]+zi, BB = _P[B+1]+zi;
+  return _lp(w,
+    _lp(v, _lp(u,_grad(_P[AA],   xf,   yf,   zf),_grad(_P[BA],   xf-1,yf,   zf)),
+           _lp(u,_grad(_P[AB],   xf,   yf-1, zf),_grad(_P[BB],   xf-1,yf-1,zf))),
+    _lp(v, _lp(u,_grad(_P[AA+1],xf,   yf,   zf-1),_grad(_P[BA+1],xf-1,yf,   zf-1)),
+           _lp(u,_grad(_P[AB+1],xf,   yf-1, zf-1),_grad(_P[BB+1],xf-1,yf-1,zf-1))));
+}
+// base offsets into a different region of noise space for each seed
+// normalises to [0, 1], stacks octaves with persistence 0.5 and lacunarity 2
+function perlin01(x, y, z, base, octaves) {
+  let val = 0, amp = 1, freq = 1, maxA = 0;
+  for (let o = 0; o < octaves; o++) {
+    val += _raw3(x*freq + base, y*freq + base, z*freq + base) * amp;
+    maxA += amp; amp *= 0.5; freq *= 2;
+  }
+  return (val / maxA + 1) * 0.5;
+}
+
+// =========================
+// lattice
+// =========================
+
+// 3d perlin field across the universe volume — one channel per element
+// seed offsets: density=seed+6, C=+1, O=+2, He=+3, H=+4, metallicity=+5
+function generateLattice(cfg) {
+  const {seed, universeSize, elementNoiseScale, elementOctaves, latticeResolution: N} = cfg;
+  // linspace(0, universeSize*noiseScale, N) rounded to 2dp
+  const steps = new Float64Array(N);
+  for (let i = 0; i < N; i++)
+    steps[i] = Math.round(i / (N-1) * universeSize * elementNoiseScale * 100) / 100;
+
+  const size = N*N*N;
+  const density=new Float32Array(size), H=new Float32Array(size), He=new Float32Array(size),
+        C=new Float32Array(size), O=new Float32Array(size), met=new Float32Array(size);
+
+  for (let zi=0; zi<N; zi++) for (let yi=0; yi<N; yi++) for (let xi=0; xi<N; xi++) {
+    const idx = zi*N*N + yi*N + xi;
+    const sx=steps[xi], sy=steps[yi], sz=steps[zi];
+    const d = perlin01(sx, sy, sz, seed+6, elementOctaves);
+    density[idx] = d;
+    C[idx]   = perlin01(sx, sy, sz, seed+1, elementOctaves) * d;
+    O[idx]   = perlin01(sx, sy, sz, seed+2, elementOctaves) * d;
+    He[idx]  = perlin01(sx, sy, sz, seed+3, elementOctaves) * d;
+    H[idx]   = perlin01(sx, sy, sz, seed+4, elementOctaves) * d;
+    met[idx] = perlin01(sx, sy, sz, seed+5, elementOctaves);
+  }
+  return {density, H, He, C, O, met, N, steps};
+}
+
+// =========================
+// systems
+// =========================
+
+// filter lattice cells by density, H and He thresholds then shuffle the candidates
+// acceptance prob: density × H × He
+// jitter within the cell to break the grid pattern
+function generateSystems(lattice, rng, cfg) {
+  const {density, H, He, C, O, met, N} = lattice;
+  const {universeSize, densityThreshold, HThreshold, HeThreshold} = cfg;
+  const cellSize = universeSize / N;
+
+  const candidates = [];
+  for (let idx = 0; idx < N*N*N; idx++) {
+    if (density[idx] <= densityThreshold) continue;
+    if (H[idx] <= HThreshold) continue;
+    if (He[idx] <= HeThreshold) continue;
+    candidates.push(idx);
+  }
+  rng.shuffle(candidates);
+
+  const systems = [];
+  for (const idx of candidates) {
+    if (rng.next() > density[idx] * H[idx] * He[idx]) continue;
+    const zi=(idx/(N*N))|0, rem=idx%(N*N), yi=(rem/N)|0, xi=rem%N;
+    const maxOff = cellSize * 0.4;
+    systems.push({
+      id: systems.length+1,
+      x: xi*cellSize + rng.uniform(-maxOff, maxOff),
+      y: yi*cellSize + rng.uniform(-maxOff, maxOff),
+      z: zi*cellSize + rng.uniform(-maxOff, maxOff),
+      density: density[idx], H: H[idx], He: He[idx],
+      C: C[idx], O: O[idx], metallicity: met[idx]
+    });
+  }
+  return systems;
+}
+
+// =========================
+// stars
+// =========================
+
+// integral of x^-alpha from lo to hi
+function _powerLawIntegral(lo, hi, alpha) {
+  if (alpha === 1) return Math.log(hi/lo);
+  const e = 1-alpha; return (Math.pow(hi,e)-Math.pow(lo,e))/e;
+}
+
+// inverse transform sampling on a power law cdf
+function _samplePL(rng, lo, hi, alpha) {
+  const e = 1-alpha;
+  return Math.pow(Math.pow(lo,e)+rng.next()*(Math.pow(hi,e)-Math.pow(lo,e)), 1/e);
+}
+
+// kroupa imf — two power laws joined at 0.5 solar masses
+// alpha = 1.3 for light stars, 2.3 for heavy ones
+function _starMass(rng) {
+  const lW = _powerLawIntegral(0.179, 0.50, 1.3);
+  const hW = Math.pow(0.5, 2.3-1.3) * _powerLawIntegral(0.50, 31.0, 2.3);
+  return rng.next() < lW/(lW+hW)
+    ? _samplePL(rng, 0.179, 0.50, 1.3)
+    : _samplePL(rng, 0.50, 31.0, 2.3);
+}
+
+// piecewise log-linear fit to the observed mass-luminosity relation
+function _starLuminosity(m) {
+  const lm = Math.log10(m);
+  if (m <= 0.45) return Math.pow(10, 2.028*lm - 0.976);
+  if (m <= 0.72) return Math.pow(10, 4.572*lm - 0.102);
+  if (m <= 1.05) return Math.pow(10, 5.743*lm - 0.007);
+  if (m <= 2.40) return Math.pow(10, 4.329*lm + 0.010);
+  if (m <= 7.0)  return Math.pow(10, 3.967*lm + 0.093);
+  return Math.pow(10, 2.865*lm + 1.105);
+}
+
+// for mass > 1.5: empirical log-log fit to effective temperature
+// for mass <= 1.5: stefan-boltzmann — T = 5772 × (L/R²)^0.25
+function _starTemperature(mass, luminosity, radius) {
+  if (mass > 1.5) {
+    const lm = Math.log10(mass);
+    return Math.pow(10, -0.170*lm*lm + 0.888*lm + 3.671);
+  }
+  return 5772 * Math.pow(luminosity / (radius*radius), 0.25);
+}
+
+// for mass <= 1.5: polynomial fit from mass alone
+// for heavy stars: stefan-boltzmann — radius from luminosity and temperature
+function _starRadius(mass, luminosity) {
+  if (mass <= 1.5)
+    return 0.438*mass*mass + 0.479*mass + 0.075;
+  const temp = _starTemperature(mass);
+  return Math.sqrt(luminosity / Math.pow(temp/5772, 4));
+}
+
+// obafgkm temperature classification
+function _starSpectralType(t) {
+  if (t >= 30000) return 'O'; if (t >= 10000) return 'B'; if (t >= 7500) return 'A';
+  if (t >= 6000)  return 'F'; if (t >= 5200)  return 'G'; if (t >= 3700) return 'K';
+  return 'M';
+}
+
+// stefan-boltzmann order-dependent — light: radius first, heavy: temp first
+function _generateStar(rng, system) {
+  const mass = _starMass(rng);
+  const luminosity = _starLuminosity(mass);
+  let radius, temperature;
+  if (mass <= 1.5) {
+    radius = _starRadius(mass, luminosity);
+    temperature = _starTemperature(mass, luminosity, radius);
+  } else {
+    temperature = _starTemperature(mass);
+    radius = _starRadius(mass, luminosity);
+  }
+  return {mass, luminosity, radius, temperature,
+    spectral_type: _starSpectralType(temperature),
+    metallicity: system.metallicity};
+}
+
+function generateStars(rng, systems, cfg) {
+  const stars = [];
+  for (let si = 0; si < systems.length; si++) {
+    const sys = systems[si];
+    const n = rng.int(1, cfg.maxStarsPerSystem+1);
+    for (let sn = 0; sn < n; sn++) {
+      const s = _generateStar(rng, sys);
+      stars.push({
+        id: stars.length+1, star_index: stars.length,
+        system_id: sys.id, system_index: si, star_number: sn,
+        mass: s.mass, luminosity: s.luminosity, radius: s.radius,
+        temperature: s.temperature, spectral_type: s.spectral_type,
+        metallicity: s.metallicity
+      });
+    }
+  }
+  return stars;
+}
+
+// =========================
+// planets
+// =========================
+
+// poisson draw — expected count from stellar mass, scaled by metallicity
+function _planetCount(star, rng) {
+  const m = star.mass;
+  let e = m < 0.6 ? 5 : m < 1.0 ? 4 : m < 1.5 ? 3.5 : 3.0;
+  e *= 0.75 + 0.5*star.metallicity;
+  return Math.max(1, Math.min(rng.poisson(e), 10));
+}
+
+// condensation radius in AU: d = 2.7 × sqrt(L)
+function _snowLine(star) { return 2.7 * Math.sqrt(star.luminosity); }
+
+// geometric spacing — each orbit is ratio × previous, ratio drawn from [1.5, 2.5]
+function _orbitalDistances(count, star, rng, cfg) {
+  const mn = cfg.minOrbitalDistance, mx = cfg.maxOrbitalDistance;
+  if (count === 1) return [rng.uniform(mn, mx)];
+  const d = [rng.uniform(mn, Math.min(0.5, mx))];
+  const ratio = rng.uniform(1.5, 2.5);
+  for (let i = 1; i < count; i++) {
+    const nx = d[d.length-1] * ratio;
+    if (nx > mx) break;
+    d.push(nx);
+  }
+  return d;
+}
+
+// log-uniform mass draw — rocky range inner of snow line, giant range outer
+// metallicity scales the result
+function _planetMass(star, od, rng) {
+  const snow = _snowLine(star);
+  const mf = 0.6 + 0.8*star.metallicity;
+  const mn = od < snow ? 0.1 : 1.0;
+  const mx = od < snow ? 10.0 : 4000.0;
+  const raw = Math.pow(10, rng.uniform(Math.log10(mn), Math.log10(mx)));
+  return Math.max(0.1, Math.min(raw * mf, 4000));
+}
+
+// type from mass and position relative to snow line
+function _planetType(mass, od, star) {
+  const snow = _snowLine(star);
+  if (mass < 10) return 'terrestrial';
+  if (od >= snow && mass < 100) return 'ice_giant';
+  return 'gas_giant';
+}
+
+// chen-kipping piecewise power law
+// rocky (< 2.04 earth masses): exponent 0.279, volatile-rich: 0.589, giant plateau: -0.044
+function _planetRadius(mass) {
+  if (mass < 2.04)  return 1.008 * Math.pow(mass,  0.279);
+  if (mass < 132)   return 1.008 * Math.pow(mass,  0.589);
+  return 11 * Math.pow(mass, -0.044);
+}
+
+// bounded albedo ranges by planet type
+function _albedo(type, rng) {
+  if (type === 'terrestrial') return rng.uniform(0.1, 0.6);
+  if (type === 'ice_giant')   return rng.uniform(0.2, 0.7);
+  return rng.uniform(0.2, 0.6);
+}
+
+// radiative equilibrium: T = 278.5 × L^0.25 × (1-A)^0.25 / sqrt(d)
+function _planetTemp(lum, od, albedo) {
+  return 278.5 * Math.pow(lum, 0.25) * Math.pow(1-albedo, 0.25) / Math.sqrt(od);
+}
+
+function _generatePlanet(star, orbitalOrder, od, rng) {
+  const mass   = _planetMass(star, od, rng);
+  const type   = _planetType(mass, od, star);
+  const radius = _planetRadius(mass);
+  const albedo = _albedo(type, rng);
+  const temp   = _planetTemp(star.luminosity, od, albedo);
+  return {orbital_order: orbitalOrder, orbital_distance: od,
+    mass, radius, planet_type: type, albedo, temperature: temp};
+}
+
+function _generatePlanets(star, rng, cfg) {
+  const count = _planetCount(star, rng);
+  const dists = _orbitalDistances(count, star, rng, cfg);
+  const planets = [];
+  for (let i = 0; i < dists.length; i++)
+    planets.push(_generatePlanet(star, i+1, dists[i], rng));
+  return planets;
+}
+
+function generateAllPlanets(stars, rng, cfg) {
+  const planets = []; let pid = 1;
+  for (const star of stars) {
+    for (const p of _generatePlanets(star, rng, cfg)) {
+      planets.push({id: pid++, system_id: star.system_id, star_id: star.id, ...p});
+    }
+  }
+  return planets;
+}
+
+// =========================
+// moons
+// =========================
+
+function _moonCount(planet, rng) {
+  const lam = planet.planet_type === 'gas_giant' ? 5
+            : planet.planet_type === 'ice_giant'  ? 2 : 0.15;
+  return Math.min(rng.poisson(lam), 12);
+}
+
+function _moonMass(planet, rng) {
+  return planet.mass * Math.pow(10, rng.uniform(-5, Math.log10(0.02)));
+}
+
+function _moonRadius(mass) {
+  return 1.008 * Math.pow(Math.max(mass, 1e-6), 0.279);
+}
+
+function _moonType(moonOD, planet, star) {
+  return planet.orbital_distance > _snowLine(star) ? 'icy' : 'rocky';
+}
+
+function _moonOrbitalDistances(planet, star, count, rng) {
+  if (count === 0) return [];
+  const roche = 2.5 * planet.radius * 4.26e-5;
+  // mirror viewer planetVR formula (0.22√r, clamped [0.12,0.60]) + MOON=150 scale
+  // so innermost moon's orbit clears the planet mesh by 0.5 visual units
+  const pvr   = Math.max(0.12, Math.min(0.60, 0.22 * Math.sqrt(Math.max(0.01, planet.radius))));
+  const minD  = Math.max(roche, (pvr + 0.5) / 150);
+  const hill  = 0.5 * planet.orbital_distance
+                * Math.pow(planet.mass / (3 * star.mass * 333000), 1/3);
+  const maxD  = Math.min(hill, minD * 60);
+  if (maxD <= minD) return [];
+  const dists = [];
+  let d = minD * rng.uniform(1.0, 2.0);
+  const ratio = rng.uniform(1.8, 3.2);
+  for (let i = 0; i < count && d <= maxD; i++) {
+    dists.push(d);
+    d *= ratio * rng.uniform(0.8, 1.2);
+  }
+  return dists;
+}
+
+function _generateMoons(planet, star, rng) {
+  const count = _moonCount(planet, rng);
+  const dists = _moonOrbitalDistances(planet, star, count, rng);
+  return dists.map((od, i) => {
+    const mass = _moonMass(planet, rng);
+    return {orbital_order: i+1, orbital_distance: od,
+            mass, radius: _moonRadius(mass), moon_type: _moonType(od, planet, star)};
+  });
+}
+
+function generateAllMoons(planets, starsById, rng) {
+  const moons = []; let mid = 1;
+  for (const planet of planets) {
+    const star = starsById[planet.star_id];
+    if (!star) continue;
+    for (const m of _generateMoons(planet, star, rng))
+      moons.push({id: mid++, planet_id: planet.id, star_id: planet.star_id,
+                  system_id: planet.system_id, ...m});
+  }
+  return moons;
+}
+
+function generateUniverse(cfg) {
+  const rng     = makePRNG(cfg.seed);
+  const lattice = generateLattice(cfg);
+  const systems = generateSystems(lattice, rng, cfg);
+  const stars   = generateStars(rng, systems, cfg);
+  const planets = generateAllPlanets(stars, rng, cfg);
+  const starsById = Object.fromEntries(stars.map(s => [s.id, s]));
+  const moons   = generateAllMoons(planets, starsById, rng);
+  return {systems, stars, planets, moons, seed: cfg.seed};
+}
+
+// VIEWER
+let _renderer=null, _animId=null, _camera=null;
+let _exitSystemFn=null, _centerFn=null;
+let rotSpeed=0.5;
+
+function _disposeObj(obj) {
+  if (obj.geometry) obj.geometry.dispose();
+  if (obj.material) {
+    const mats=Array.isArray(obj.material)?obj.material:[obj.material];
+    mats.forEach(m=>{ if(m.map)m.map.dispose(); m.dispose(); });
+  }
+}
+function _disposeGroup(g) { if(g) g.traverse(_disposeObj); }
+
+function destroyViewer() {
+  if (_animId!=null){cancelAnimationFrame(_animId);_animId=null;}
+  if (_renderer){
+    _renderer.dispose();
+    if(_renderer.domElement.parentNode) _renderer.domElement.parentNode.removeChild(_renderer.domElement);
+    _renderer=null;
+  }
+  _camera=null; _exitSystemFn=null;
+}
+
+function initViewer(DATA) {
+  destroyViewer();
+
+  const AU=6.0, MOON=150.0, GAP=0.45;
+  const starVR  = r=>Math.max(0.30,Math.min(0.80,0.35*r));
+  const planetVR= r=>Math.max(0.12,Math.min(0.60,0.22*Math.sqrt(Math.max(0.01,r))));
+
+  let mode='universe', currentSys=null;
+  let systemPoints=null, systemOrder=[];
+  const bodyMeshMap={};
+  const _bodyTime={value:0.0};
+
+  const systems=DATA.systems;
+  const starsBySys={}, planetsBySys={}, moonsByPlanet={}, sysById={}, planetCount={};
+  systems.forEach(s=>{sysById[s.id]=s; planetCount[s.id]=0;});
+  DATA.stars.forEach(st=>{
+    if(!starsBySys[st.system_id]) starsBySys[st.system_id]=[];
+    starsBySys[st.system_id].push(st);
+  });
+  DATA.planets.forEach(p=>{
+    if(!planetsBySys[p.system_id]) planetsBySys[p.system_id]=[];
+    planetsBySys[p.system_id].push(p);
+    planetCount[p.system_id]=(planetCount[p.system_id]||0)+1;
+  });
+  DATA.moons.forEach(m=>{
+    if(!moonsByPlanet[m.planet_id]) moonsByPlanet[m.planet_id]=[];
+    moonsByPlanet[m.planet_id].push(m);
+  });
+
+  const container=document.getElementById('container');
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x05060a);
+  const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,500000);
+  _camera=camera;
+
+  const renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(innerWidth,innerHeight);
+  container.appendChild(renderer.domElement);
+  _renderer=renderer;
+
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true; controls.dampingFactor=0.08; controls.screenSpacePanning=true;
+
+  const uHalf = systems.length>0
+    ? systems.reduce((m,s)=>Math.max(m,s.x,s.y,s.z),0)*0.5
+    : 500;
+  const starDist = Math.max(6000, uHalf * 20);
+  controls.minDistance = 0.5;
+  controls.maxDistance = starDist * 0.7;
+
+  const desiredTarget=new THREE.Vector3(uHalf,uHalf,uHalf);
+  const desiredCam   =new THREE.Vector3(uHalf,uHalf*0.6,uHalf*3);
+  camera.position.copy(desiredCam); controls.target.copy(desiredTarget);
+
+  let flying=false;
+  function startFlight(camPos,target){desiredCam.copy(camPos);desiredTarget.copy(target);flying=true;controls.enabled=false;}
+  function cancelFlight(){if(flying){flying=false;controls.enabled=true;}}
+  renderer.domElement.addEventListener('pointerdown',cancelFlight);
+  renderer.domElement.addEventListener('wheel',cancelFlight,{passive:true});
+
+  const clock=new THREE.Clock();
+
+  // background starfield — separate seed keeps it stable across regenerations
+  (function(){
+    const srng=makePRNG(DATA.seed+99);
+    const cx=uHalf, cy=uHalf, cz=uHalf;
+    const mkLayer=(n, rLo, rHi, col, sz, op)=>{
+      const pos=new Float32Array(n*3);
+      for(let i=0;i<n;i++){
+        const r=starDist*(rLo+srng.next()*(rHi-rLo));
+        const t=srng.next()*Math.PI*2, ph=Math.acos(2*srng.next()-1);
+        pos[i*3]=cx+r*Math.sin(ph)*Math.cos(t); pos[i*3+1]=cy+r*Math.cos(ph); pos[i*3+2]=cz+r*Math.sin(ph)*Math.sin(t);
+      }
+      const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+      scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:col,size:sz,sizeAttenuation:false,transparent:true,opacity:op})));
+    };
+    mkLayer(3500, 0.75, 1.0, 0x8899bb, 1.0, 0.55); // faint distant stars
+    mkLayer( 700, 0.60, 0.8, 0xddeeff, 1.8, 0.85); // brighter foreground stars
+  })();
+
+  function discTexture(){
+    const c=document.createElement('canvas'); c.width=c.height=64;
+    const x=c.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
+    g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.4,'rgba(255,255,255,0.6)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=g; x.fillRect(0,0,64,64); return new THREE.CanvasTexture(c);
+  }
+  const disc=discTexture();
+
+  const tooltip=document.getElementById('tooltip');
+  function metColor(m){return new THREE.Color(0x3a6bff).lerp(new THREE.Color(0xff9b3a),Math.max(0,Math.min(1,m)));}
+  const SPEC_COL={O:'#9bb0ff',B:'#aabfff',A:'#cad7ff',F:'#f8f7ff',G:'#fff4e8',K:'#ffd2a1',M:'#ffcc6f'};
+  const PL_COL={terrestrial:0x4caf50,ice_giant:0x64b5f6,gas_giant:0xff7043};
+
+  // system view
+  function buildSystems(list){
+    systemOrder=list.map(s=>s.id);
+    const pos=new Float32Array(list.length*3), col=new Float32Array(list.length*3);
+    list.forEach((s,i)=>{
+      pos[i*3]=s.x; pos[i*3+1]=s.y; pos[i*3+2]=s.z;
+      const c=metColor(s.metallicity);
+      col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+    });
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    g.setAttribute('color',new THREE.BufferAttribute(col,3));
+    if(systemPoints){scene.remove(systemPoints);_disposeGroup(systemPoints);}
+    const mat=new THREE.ShaderMaterial({
+      uniforms:{uRef:{value:1500},uMin:{value:3},uMax:{value:16},uOpacity:{value:1}},
+      vertexShader:[
+        'attribute vec3 color;','varying vec3 vColor;','uniform float uRef,uMin,uMax;',
+        'void main(){','  vColor=color;','  vec4 mv=modelViewMatrix*vec4(position,1.0);',
+        '  float d=max(1.0,-mv.z);','  gl_PointSize=clamp(6.0*(uRef/d),uMin,uMax);',
+        '  gl_Position=projectionMatrix*mv;','}'
+      ].join('\n'),
+      fragmentShader:[
+        'varying vec3 vColor;','uniform float uOpacity;',
+        'void main(){',
+        '  vec2 c=gl_PointCoord-0.5;',
+        '  float d=dot(c,c)*4.0;',
+        '  if(d>1.0)discard;',
+        '  float a=pow(1.0-d,1.5)*uOpacity;',
+        '  vec3 col=vColor+vec3(0.25)*(1.0-d)*(1.0-d);',
+        '  gl_FragColor=vec4(col,a);','}'
+      ].join('\n'),
+      transparent:true,depthWrite:false
+    });
+    systemPoints=new THREE.Points(g,mat);
+    systemPoints.frustumCulled=false;
+    scene.add(systemPoints);
+  }
+
+  let detailGroup=null;
+  function clearDetail(){if(detailGroup){scene.remove(detailGroup);_disposeGroup(detailGroup);detailGroup=null;}}
+
+  // deterministic per-planet rng for orbit phase and inclination
+  function rngFor(seed){let s=(seed>>>0)||1; return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return(s>>>0)/4294967296;};}
+
+  function orbitPoint(a,phase,incl){
+    return new THREE.Vector3(a*Math.cos(phase),a*Math.sin(phase)*Math.cos(incl),a*Math.sin(phase)*Math.sin(incl));
+  }
+  function orbitRing(center,a,incl,n){
+    const pts=[];
+    for(let i=0;i<=n;i++){const th=i/n*Math.PI*2; pts.push(new THREE.Vector3(center.x+a*Math.cos(th),center.y+a*Math.sin(th)*Math.cos(incl),center.z+a*Math.sin(th)*Math.sin(incl)));}
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x4466aa,transparent:true,opacity:0.3}));
+  }
+  function edge(a,b,color){return new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),new THREE.LineBasicMaterial({color,transparent:true,opacity:0.35}));}
+  function glowSprite(color,scale){
+    const m=new THREE.SpriteMaterial({map:disc,color,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending});
+    const sp=new THREE.Sprite(m); sp.scale.set(scale,scale,scale); return sp;
+  }
+
+  // ── procedural body shaders ──────────────────────────────────────────────
+  const _VERT=`
+    varying vec3 vW,vN,vL;
+    void main(){
+      vec4 w=modelMatrix*vec4(position,1.0);
+      vW=w.xyz; vN=normalize(mat3(modelMatrix)*normal); vL=normalize(position);
+      gl_Position=projectionMatrix*viewMatrix*w;
+    }`;
+  const _NOISE=`
+    float _h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+    float _n(vec2 p){
+      vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+      return mix(mix(_h(i),_h(i+vec2(1,0)),f.x),
+                 mix(_h(i+vec2(0,1)),_h(i+vec2(1,1)),f.x),f.y);}
+    float fbm(vec2 p,int o){float v=0.,a=.5;
+      for(int i=0;i<8;i++){if(i>=o)break;v+=a*_n(p);p*=2.;a*=.5;}return v;}
+    float _n3(vec3 p){
+      vec3 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+      float n=i.x+i.y*57.+i.z*113.;
+      return mix(
+        mix(mix(_h(vec2(n,0.)),_h(vec2(n+1.,0.)),f.x),
+            mix(_h(vec2(n+57.,0.)),_h(vec2(n+58.,0.)),f.x),f.y),
+        mix(mix(_h(vec2(n+113.,0.)),_h(vec2(n+114.,0.)),f.x),
+            mix(_h(vec2(n+170.,0.)),_h(vec2(n+171.,0.)),f.x),f.y),f.z);}
+    float fbm3(vec3 p,int o){float v=0.,a=.5;
+      for(int i=0;i<8;i++){if(i>=o)break;v+=a*_n3(p);p*=2.;a*=.5;}return v;}`;
+  const TAU=6.28318,PI=3.14159;
+
+  function starMat(hexCol){
+    const c=new THREE.Color(hexCol);
+    return new THREE.ShaderMaterial({
+      uniforms:{uColor:{value:new THREE.Vector3(c.r,c.g,c.b)},
+                uSeed:{value:Math.random()},uTime:_bodyTime},
+      vertexShader:_VERT,
+      fragmentShader:`
+        ${_NOISE}
+        varying vec3 vL;
+        uniform vec3 uColor;
+        uniform float uSeed,uTime;
+        void main(){
+          float ang=uTime*1.571+uSeed*6.283;
+          float ca=cos(ang),sa=sin(ang);
+          vec3 sp=vec3(vL.x*ca-vL.z*sa,vL.y,vL.x*sa+vL.z*ca)+uSeed*0.17;
+          float surf=fbm3(sp*7.,4);
+          float fine=fbm3(sp*18.+1.1,3);
+          vec3 col=uColor*(0.80+0.20*surf)*(0.90+0.10*fine);
+          gl_FragColor=vec4(col,1.0);
+        }`
+    });
+  }
+
+  function planetMat(type,hexCol,lightPos,seed){
+    const c=new THREE.Color(hexCol);
+    const lp=lightPos instanceof THREE.Vector3?lightPos:new THREE.Vector3();
+    const s=(seed%99991)/99991.0;
+    const frag={
+      terrestrial:`
+        ${_NOISE}
+        varying vec3 vW,vN,vL;
+        uniform vec3 uColor,uLight; uniform float uSeed,uTime;
+        void main(){
+          vec3 L=normalize(uLight-vW);
+          float diff=max(0.,dot(vN,L));
+          float light=0.45+0.55*diff;
+          float ang=uTime*0.942+uSeed*6.283;
+          float ca=cos(ang),sa=sin(ang);
+          vec3 sp=vec3(vL.x*ca-vL.z*sa,vL.y,vL.x*sa+vL.z*ca)+uSeed*0.17;
+          float land=fbm3(sp*3.2,4)*1.7-(0.60+uSeed*0.50);
+          float detail=fbm3(sp*8.5+1.3,3);
+          vec3 ocean=mix(vec3(0.04,0.14,0.56),vec3(0.10,0.38,0.54),uSeed*0.6);
+          vec3 sand=mix(vec3(0.30,0.21,0.09),vec3(0.52,0.38,0.18),uSeed);
+          vec3 vege=mix(vec3(0.09,0.38,0.07),vec3(0.22,0.44,0.10),uSeed);
+          vec3 landC=mix(sand,vege,clamp(detail*(1.2-uSeed*0.9),0.,1.));
+          vec3 col=mix(ocean,landC,smoothstep(-0.06,0.14,land));
+          col=mix(col,uColor*0.4,0.10);
+          gl_FragColor=vec4(col*light,1.0);
+        }`,
+      gas_giant:`
+        ${_NOISE}
+        varying vec3 vW,vN,vL;
+        uniform vec3 uColor,uLight; uniform float uSeed,uTime;
+        void main(){
+          vec3 L=normalize(uLight-vW);
+          float diff=max(0.,dot(vN,L));
+          float light=0.45+0.55*diff;
+          float ang=uTime*0.753+uSeed*6.283;
+          float ca=cos(ang),sa=sin(ang);
+          vec3 sp=vec3(vL.x*ca-vL.z*sa,vL.y,vL.x*sa+vL.z*ca);
+          float bandFreq=18.+uSeed*9.;
+          float warpStr=0.30+uSeed*0.25;
+          float warp=fbm3(sp*4.,4)*warpStr;
+          float band=sin((vL.y+warp)*bandFreq+fbm3(sp*2.,3)*1.5)*0.5+0.5;
+          float detail=fbm3(sp*13.+uSeed,3);
+          vec3 c1=uColor*0.72, c2=uColor*1.22, c3=vec3(0.94,0.90,0.80);
+          vec3 col=mix(c1,c2,smoothstep(0.28,0.72,band));
+          col=mix(col,c3,smoothstep(0.72,1.,band)*(0.4+uSeed*0.3));
+          col*=0.84+0.16*detail;
+          gl_FragColor=vec4(col*light,1.0);
+        }`,
+      ice_giant:`
+        ${_NOISE}
+        varying vec3 vW,vN,vL;
+        uniform vec3 uColor,uLight; uniform float uSeed,uTime;
+        void main(){
+          vec3 L=normalize(uLight-vW);
+          float diff=max(0.,dot(vN,L));
+          float light=0.45+0.55*diff;
+          float ang=uTime*0.628+uSeed*6.283;
+          float ca=cos(ang),sa=sin(ang);
+          vec3 sp=vec3(vL.x*ca-vL.z*sa,vL.y,vL.x*sa+vL.z*ca);
+          float warpStr=0.40+uSeed*0.25;
+          float warp=fbm3(sp*3.,3)*warpStr;
+          float swirl=fbm3(sp*5.5+uSeed,4);
+          float bandFreq=11.+uSeed*5.;
+          float band=sin((vL.y+warp*0.5)*bandFreq)*0.5+0.5;
+          vec3 c3=vec3(0.80+uSeed*0.12,0.89,0.97);
+          vec3 c1=uColor*0.62, c2=uColor*1.28;
+          vec3 col=mix(c1,c2,swirl);
+          col=mix(col,c3,band*0.22);
+          col*=0.87+0.13*fbm3(sp*19.,3);
+          gl_FragColor=vec4(col*light,1.0);
+        }`
+    };
+    return new THREE.ShaderMaterial({
+      uniforms:{uColor:{value:new THREE.Vector3(c.r,c.g,c.b)},
+                uLight:{value:lp.clone()},uSeed:{value:s},uTime:_bodyTime},
+      vertexShader:_VERT,
+      fragmentShader:frag[type]||frag.terrestrial
+    });
+  }
+
+  function moonMat(isIcy,lightPos,seed){
+    const lp=lightPos instanceof THREE.Vector3?lightPos:new THREE.Vector3();
+    const s=(seed%99991)/99991.0;
+    return new THREE.ShaderMaterial({
+      uniforms:{uLight:{value:lp.clone()},uSeed:{value:s},
+                uIcy:{value:isIcy?1.0:0.0},uTime:_bodyTime},
+      vertexShader:_VERT,
+      fragmentShader:`
+        ${_NOISE}
+        varying vec3 vW,vN,vL;
+        uniform vec3 uLight; uniform float uSeed,uIcy,uTime;
+        void main(){
+          vec3 L=normalize(uLight-vW);
+          float diff=max(0.,dot(vN,L));
+          float light=0.40+0.60*diff;
+          float ang=uTime*0.08+uSeed*6.283;
+          float ca=cos(ang),sa=sin(ang);
+          vec3 sp=vec3(vL.x*ca-vL.z*sa,vL.y,vL.x*sa+vL.z*ca)+uSeed*0.17;
+          float surf=fbm3(sp*9.,4);
+          float fine=fbm3(sp*22.+1.3,3);
+          vec3 rocky=vec3(0.30,0.26,0.22)*(0.7+0.3*surf)*(0.88+0.12*fine);
+          vec3 icy=vec3(0.70,0.78,0.88)*(0.8+0.2*surf)*(0.90+0.10*fine);
+          vec3 col=mix(rocky,icy,uIcy);
+          gl_FragColor=vec4(col*light,1.0);
+        }`
+    });
+  }
+
+  function cloudMat(type,lightPos,seed){
+    const lp=lightPos instanceof THREE.Vector3?lightPos:new THREE.Vector3();
+    const s=(seed%99991)/99991.0;
+    // cloud composition per type: water-ice, ammonia-ice, methane-ice
+    const cfg={
+      terrestrial:{col:[0.95,0.96,0.98],thresh:0.57,alpha:0.58},
+      gas_giant:  {col:[0.91,0.88,0.78],thresh:0.54,alpha:0.46},
+      ice_giant:  {col:[0.82,0.88,0.94],thresh:0.64,alpha:0.30},
+    }[type]||{col:[0.95,0.96,0.98],thresh:0.57,alpha:0.58};
+    const [cr,cg,cb]=cfg.col;
+    return new THREE.ShaderMaterial({
+      uniforms:{uLight:{value:lp.clone()},uSeed:{value:s},uTime:_bodyTime,
+                uCol:{value:new THREE.Vector3(cr,cg,cb)},
+                uThresh:{value:cfg.thresh},uMaxAlpha:{value:cfg.alpha}},
+      vertexShader:_VERT,
+      fragmentShader:`
+        ${_NOISE}
+        varying vec3 vW,vN,vL;
+        uniform vec3 uLight,uCol; uniform float uSeed,uTime,uThresh,uMaxAlpha;
+        void main(){
+          vec3 L=normalize(uLight-vW);
+          float diff=max(0.,dot(vN,L));
+          float light=0.50+0.50*diff;
+          float ang=uTime*1.15+uSeed*6.283;
+          float ca=cos(ang),sa=sin(ang);
+          vec3 sp=vec3(vL.x*ca-vL.z*sa,vL.y,vL.x*sa+vL.z*ca)+uSeed*0.23;
+          float c1=fbm3(sp*3.5,4);
+          float c2=fbm3(sp*7.+0.8,3);
+          float alpha=smoothstep(uThresh,uThresh+0.16,c1+c2*0.3)*uMaxAlpha*light;
+          gl_FragColor=vec4(uCol,alpha);
+        }`,
+      transparent:true,
+      depthWrite:false
+    });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  function enterSystem(sysId){
+    const sys=sysById[sysId]; if(!sys)return;
+    mode='system'; currentSys=sysId; clearDetail();
+    Object.keys(bodyMeshMap).forEach(k=>delete bodyMeshMap[k]);
+    const center=new THREE.Vector3(sys.x,sys.y,sys.z);
+    detailGroup=new THREE.Group(); scene.add(detailGroup);
+
+    const stars=starsBySys[sysId]||[];
+    const starPos={}, starRadius={};
+    let maxStarR=0.3;
+    stars.forEach(st=>{ maxStarR=Math.max(maxStarR,starVR(st.radius)); });
+    const starGlow=1.25*maxStarR;
+    // chord between adjacent stars in ring: 2*R*sin(π/n) >= starGap
+    const starGap = 2*starGlow + GAP;
+    const sep = stars.length > 1
+      ? starGap / (2 * Math.sin(Math.PI / stars.length))
+      : 0;
+
+    stars.forEach((st,i)=>{
+      const ang=stars.length>1 ? i/stars.length*Math.PI*2 : 0;
+      const pos=center.clone().add(new THREE.Vector3(Math.cos(ang)*sep,0,Math.sin(ang)*sep));
+      starPos[st.id]=pos;
+      const r=starVR(st.radius); starRadius[st.id]=r;
+      const col=SPEC_COL[st.spectral_type]||'#ffffff';
+      const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,32,32),starMat(col));
+      mesh.position.copy(pos); mesh.userData={type:'star',data:st,radius:r,bodyKey:'star-'+st.id};
+      bodyMeshMap['star-'+st.id]=mesh;
+      detailGroup.add(mesh);
+      const gl=glowSprite(new THREE.Color(col),r*3.8); gl.position.copy(pos); detailGroup.add(gl);
+    });
+
+    // non-overlapping orbit layout — visual radii, not physical distances
+    const pl=(planetsBySys[sysId]||[]).slice().sort((a,b)=>a.orbital_distance-b.orbital_distance);
+    const moonPad={};
+    pl.forEach(p=>{
+      moonPad[p.id]=(moonsByPlanet[p.id]||[]).reduce((m,mn)=>Math.max(m,mn.orbital_distance*MOON),0);
+    });
+    const orbits=[]; let prevA=null, prevR=0;
+    pl.forEach(p=>{
+      const rp=planetVR(p.radius), sr=starRadius[p.star_id]||maxStarR, mp=moonPad[p.id]||0;
+      let a=Math.max(p.orbital_distance*AU, 1.25*sr+rp+mp+GAP);
+      if(stars.length>1) a=Math.max(a, sep+sr+rp+mp+GAP);
+      if(prevA!==null) a=Math.max(a, prevA+prevR+rp+mp+GAP);
+      orbits.push(a); prevA=a; prevR=rp+mp;
+    });
+
+    let maxOrbit=1;
+    // fibonacci sphere — cos(phase) evenly spaced, incl stepped by golden angle
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const n = pl.length;
+
+    // include star spheres so planets don't clip them
+    const placed = stars.map(st => ({pos: starPos[st.id].clone(), r: starRadius[st.id]}));
+
+    pl.forEach((p,i)=>{
+      const a=orbits[i];
+      const starC = starPos[p.star_id] || center;
+      const rand=rngFor((p.id*2654435761)>>>0); // keep for moons
+      const r=planetVR(p.radius);
+
+      // fibonacci base position
+      const cosPhase = n > 1 ? 1 - 2*(i+0.5)/n : 0;
+      const basePhase = Math.acos(Math.max(-1, Math.min(1, cosPhase)));
+      let incl = i * goldenAngle;
+
+      // nudge incl by goldenAngle until no overlap
+      const rEff = r + (moonPad[p.id]||0);
+      let pos = center.clone().add(orbitPoint(a, basePhase, incl));
+      for (let k = 1; k < 32; k++) {
+        if (placed.every(o => pos.distanceTo(o.pos) >= o.r + rEff + GAP)) break;
+        incl = i * goldenAngle + k * goldenAngle;
+        pos = center.clone().add(orbitPoint(a, basePhase, incl));
+      }
+      placed.push({pos, r: rEff});
+
+      maxOrbit=Math.max(maxOrbit,a);
+      const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,24,24),planetMat(p.planet_type,PL_COL[p.planet_type]||0xffffff,starPos[p.star_id]||center,p.id));
+      mesh.position.copy(pos); mesh.userData={type:'planet',data:p,radius:r,bodyKey:'planet-'+p.id};
+      bodyMeshMap['planet-'+p.id]=mesh;
+      detailGroup.add(mesh);
+      const cm=new THREE.Mesh(new THREE.SphereGeometry(r*1.05,24,24),cloudMat(p.planet_type,starPos[p.star_id]||center,p.id));
+      cm.position.copy(pos); detailGroup.add(cm);
+      detailGroup.add(orbitRing(center,a,incl,80));
+      detailGroup.add(edge(starC,pos,0x335588));
+      (moonsByPlanet[p.id]||[]).forEach(mn=>{
+        const mr=Math.max(0.001,mn.orbital_distance)*MOON;
+        const ph2=rand()*Math.PI*2, ic2=rand()*Math.PI;
+        const mp=pos.clone().add(orbitPoint(mr,ph2,ic2));
+        const mmesh=new THREE.Mesh(new THREE.SphereGeometry(Math.max(0.06,planetVR(mn.radius)*0.6),16,16),moonMat(mn.moon_type==='icy',starPos[p.star_id]||center,mn.id));
+        mmesh.position.copy(mp); mmesh.userData={type:'moon',data:mn,radius:0.1,bodyKey:'moon-'+mn.id};
+        bodyMeshMap['moon-'+mn.id]=mmesh;
+        detailGroup.add(mmesh);
+        detailGroup.add(orbitRing(pos,mr,ic2,40));
+        detailGroup.add(edge(pos,mp,0x555555));
+      });
+    });
+
+    const dist=Math.max(60,(maxOrbit+1.25*maxStarR)*1.5);
+    const sysCamPos = center.clone().add(new THREE.Vector3(0,dist*0.3,dist));
+    _centerFn = () => startFlight(sysCamPos.clone(), center.clone());
+    startFlight(sysCamPos, center);
+    if(systemPoints){
+      const K=120;
+      systemPoints.scale.setScalar(K);
+      systemPoints.position.copy(center.clone().multiplyScalar(1-K));
+      systemPoints.material.uniforms.uOpacity.value=0;
+    }
+    showSystemInfo(sys);
+    document.getElementById('backBtn').style.display='inline-block';
+    document.getElementById('crumb').textContent='System #'+sysId;
+  }
+
+  function exitSystem(){
+    mode='universe'; currentSys=null; clearDetail();
+    if(systemPoints){
+      systemPoints.scale.setScalar(1); systemPoints.position.set(0,0,0);
+      systemPoints.material.uniforms.uOpacity.value=1;
+    }
+    startFlight(new THREE.Vector3(uHalf,uHalf*0.6,uHalf*3),new THREE.Vector3(uHalf,uHalf,uHalf));
+    _centerFn = () => startFlight(new THREE.Vector3(uHalf,uHalf*0.6,uHalf*3), new THREE.Vector3(uHalf,uHalf,uHalf));
+    document.getElementById('info').innerHTML='Click a system to explore.';
+    document.getElementById('backBtn').style.display='none';
+    document.getElementById('crumb').textContent='Universe';
+  }
+  _exitSystemFn=exitSystem;
+  _centerFn = () => startFlight(new THREE.Vector3(uHalf,uHalf*0.6,uHalf*3), new THREE.Vector3(uHalf,uHalf,uHalf));
+
+  const ray=new THREE.Raycaster();
+  const mouse=new THREE.Vector2();
+  let downXY=null;
+
+  function nearestSystem(mx,my){
+    const v=new THREE.Vector3(); let best=null, bestD=18;
+    for(const id of systemOrder){
+      const s=sysById[id]; v.set(s.x,s.y,s.z).project(camera);
+      if(v.z>1)continue;
+      const sx=(v.x*0.5+0.5)*innerWidth, sy=(-v.y*0.5+0.5)*innerHeight;
+      const d=Math.hypot(sx-mx,sy-my);
+      if(d<bestD){bestD=d;best=id;}
+    }
+    return best;
+  }
+
+  renderer.domElement.addEventListener('pointerdown',e=>{downXY=[e.clientX,e.clientY];});
+  renderer.domElement.addEventListener('pointerup',e=>{
+    if(!downXY)return;
+    const dx=e.clientX-downXY[0], dy=e.clientY-downXY[1]; downXY=null;
+    if(dx*dx+dy*dy>25)return;
+    if(mode==='universe'&&systemPoints){
+      const id=nearestSystem(e.clientX,e.clientY); if(id!=null)enterSystem(id);
+    } else if(mode==='system'&&detailGroup){
+      mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1;
+      ray.setFromCamera(mouse,camera);
+      const hits=ray.intersectObjects(detailGroup.children,false).filter(h=>h.object.userData&&h.object.userData.type);
+      if(hits.length){const o=hits[0].object; selectBodyByKey(o.userData.bodyKey);}
+    }
+  });
+
+  renderer.domElement.addEventListener('pointermove',e=>{
+    if(flying||mode!=='universe'){tooltip.style.display='none';return;}
+    const id=nearestSystem(e.clientX,e.clientY);
+    if(id==null){tooltip.style.display='none';return;}
+    const s=sysById[id];
+    tooltip.style.display='block';
+    tooltip.style.left=(e.clientX+14)+'px'; tooltip.style.top=(e.clientY+14)+'px';
+    tooltip.innerHTML='System #'+id+'<br>met '+s.metallicity.toFixed(2)+'<br>planets '+(planetCount[id]||0);
+  });
+
+  function focusBody(o){
+    const p=o.position.clone(), r=o.userData.radius||1;
+    const dir=new THREE.Vector3().subVectors(camera.position,p).normalize();
+    startFlight(p.clone().add(dir.multiplyScalar(Math.max(8,r*8+6))),p);
+  }
+
+  // info panels
+  function row(k,v){return'<tr><td class="k">'+k+'</td><td>'+v+'</td></tr>';}
+
+  function showSystemInfo(s){
+    const stars=(starsBySys[s.id]||[]).slice().sort((a,b)=>a.mass-b.mass);
+    const planets=(planetsBySys[s.id]||[]).slice().sort((a,b)=>a.orbital_distance-b.orbital_distance);
+    let h='<h3>System #'+s.id+'</h3><table>'+
+      row('metallicity',s.metallicity.toFixed(3))+row('density',s.density.toFixed(3))+
+      row('H',s.H.toFixed(3))+row('He',s.He.toFixed(3))+row('C',s.C.toFixed(3))+row('O',s.O.toFixed(3))+
+      row('stars',stars.length)+row('planets',planets.length)+
+      '</table><hr>';
+    stars.forEach(st=>{
+      const col=SPEC_COL[st.spectral_type]||'#ffffff';
+      h+=`<div class="body-item" data-key="star-${st.id}"><span class="sw" style="background:${col}"></span><span>${st.spectral_type} star — ${st.mass.toFixed(2)} M&#9737;</span></div>`;
+      planets.filter(p=>p.star_id===st.id).forEach(p=>{
+        const col=PL_COL[p.planet_type]||'#ffffff';
+        h+=`<div class="body-item" data-key="planet-${p.id}" style="padding-left:14px"><span class="sw" style="background:${col}"></span><span>Planet ${p.orbital_order} — ${p.planet_type} — ${p.orbital_distance.toFixed(2)} AU</span></div>`;
+        (moonsByPlanet[p.id]||[]).forEach(mn=>{
+          h+=`<div class="body-item" data-key="moon-${mn.id}" style="padding-left:28px"><span class="sw" style="background:#aaaaaa"></span><span>${mn.moon_type} moon — ${mn.orbital_distance.toFixed(4)} AU</span></div>`;
+        });
+      });
+    });
+    h+='<hr><div id="bodyDetail" style="color:#7f9bc4">click a body above</div>';
+    document.getElementById('info').innerHTML=h;
+    document.querySelectorAll('#info .body-item').forEach(el=>{
+      el.onclick=()=>selectBodyByKey(el.dataset.key);
+    });
+  }
+
+  function selectBodyByKey(key){
+    document.querySelectorAll('#info .body-item').forEach(el=>el.classList.toggle('sel',el.dataset.key===key));
+    const mesh=bodyMeshMap[key];
+    if(mesh){focusBody(mesh); showBodyInfo(mesh.userData.type,mesh.userData.data);}
+  }
+
+  function showBodyInfo(type,d){
+    let h='<h3>'+(type==='star'?'Star #'+d.id:type==='planet'?'Planet (order '+d.orbital_order+')':'Moon #'+d.id)+'</h3><table>';
+    if(type==='star')
+      h+=row('system',d.system_id)+row('star #',d.star_number)+row('spectral',d.spectral_type)+
+         row('mass',d.mass.toFixed(3)+' M&#9737;')+row('radius',d.radius.toFixed(3)+' R&#9737;')+
+         row('temp',d.temperature.toFixed(0)+' K')+row('luminosity',d.luminosity.toFixed(3)+' L&#9737;')+
+         row('metallicity',d.metallicity.toFixed(3));
+    else if(type==='planet')
+      h+=row('system',d.system_id)+row('star',d.star_id)+row('order',d.orbital_order)+
+         row('type',d.planet_type)+row('mass',d.mass.toFixed(2)+' M&#8853;')+
+         row('radius',d.radius.toFixed(2)+' R&#8853;')+row('temp',d.temperature.toFixed(0)+' K')+
+         row('albedo',d.albedo.toFixed(2))+row('orbit',d.orbital_distance.toFixed(3)+' AU');
+    else
+      h+=row('planet',d.planet_id)+row('order',d.orbital_order)+
+         row('mass',d.mass.toFixed(3))+row('radius',d.radius.toFixed(3))+
+         row('orbit',d.orbital_distance.toFixed(4)+' AU');
+    h+='</table>';
+    const detail=document.getElementById('bodyDetail');
+    if(detail) detail.innerHTML=h;
+    else document.getElementById('info').innerHTML=h;
+  }
+
+  // search/filter
+  const SPECS=['O','B','A','F','G','K','M'];
+  const specBox=document.getElementById('specBoxes');
+  specBox.innerHTML='';
+  SPECS.forEach(sp=>{
+    const l=document.createElement('label'), cb=document.createElement('input');
+    cb.type='checkbox'; cb.value=sp; cb.checked=true;
+    l.appendChild(cb); l.appendChild(document.createTextNode(sp)); specBox.appendChild(l);
+  });
+
+  function applyFilter(){
+    const metMin=+document.getElementById('metMin').value;
+    const metMax=+document.getElementById('metMax').value;
+    const minP=+document.getElementById('minP').value;
+    const specs=Array.from(document.querySelectorAll('#specBoxes input:checked')).map(c=>c.value);
+    const visible=systems.filter(s=>{
+      if(s.metallicity<metMin||s.metallicity>metMax)return false;
+      if((planetCount[s.id]||0)<minP)return false;
+      if(specs.length<SPECS.length){
+        const sp=(starsBySys[s.id]||[]).map(st=>st.spectral_type);
+        if(!sp.some(x=>specs.includes(x)))return false;
+      }
+      return true;
+    });
+    buildSystems(visible);
+    document.getElementById('matchCount').textContent=visible.length+' shown';
+    const ml=document.getElementById('matchList'); ml.innerHTML='';
+    visible.slice(0,200).forEach(s=>{
+      const d=document.createElement('div');
+      d.textContent='#'+s.id+' (met '+s.metallicity.toFixed(2)+', '+(planetCount[s.id]||0)+' pl)';
+      d.onclick=()=>enterSystem(s.id); ml.appendChild(d);
+    });
+  }
+
+  document.getElementById('applyF').onclick=applyFilter;
+  document.getElementById('backBtn').onclick=exitSystem;
+  document.getElementById('goId').onclick=()=>{
+    const v=parseInt(document.getElementById('sysId').value,10);
+    if(sysById[v])enterSystem(v);
+  };
+
+  // getDelta every frame so dt never accumulates during flight
+  function animate(){
+    _animId=requestAnimationFrame(animate);
+    const dt=Math.min(clock.getDelta(),0.05);
+    _bodyTime.value+=dt*rotSpeed;
+    if(flying){
+      controls.target.lerp(desiredTarget,0.1);
+      camera.position.lerp(desiredCam,0.1);
+      camera.lookAt(controls.target);
+      if(camera.position.distanceTo(desiredCam)<1.5&&controls.target.distanceTo(desiredTarget)<1.5){
+        flying=false;
+        controls.target.copy(desiredTarget);
+        camera.position.copy(desiredCam);
+        controls.enabled=true;
+      }
+    } else {
+      controls.update();
+    }
+    renderer.render(scene,camera);
+  }
+
+  applyFilter(); // populates system points via buildSystems
+  animate();
+}
+
+// registered once, survive viewer re-init
+const _keys={};
+
+(function(){
+  function typing(){return document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName);}
+  window.addEventListener('keydown',e=>{
+    if(typing())return;
+    if(e.code==='Space'){ e.preventDefault(); if(_centerFn)_centerFn(); return; }
+    if(e.key==='Escape'&&_exitSystemFn){ _exitSystemFn(); return; }
+    _keys[e.code]=true;
+  });
+  window.addEventListener('keyup',e=>{_keys[e.code]=false;});
+  window.addEventListener('resize',()=>{
+    if(_camera&&_renderer){
+      _camera.aspect=innerWidth/innerHeight;
+      _camera.updateProjectionMatrix();
+      _renderer.setSize(innerWidth,innerHeight);
+    }
+  });
+})();
+
+// =========================
+// config + regenerate
+// =========================
+function readCfg(){
+  return {
+    seed:               +document.getElementById('cfg-seed').value,
+    universeSize:       +document.getElementById('cfg-universeSize').value,
+    elementNoiseScale:  +document.getElementById('cfg-noiseScale').value,
+    elementOctaves:     Math.max(1, +document.getElementById('cfg-octaves').value|0),
+    latticeResolution:  Math.max(5, Math.min(80, +document.getElementById('cfg-latticeRes').value|0)),
+    densityThreshold:   +document.getElementById('cfg-densityThresh').value,
+    HThreshold:         +document.getElementById('cfg-HThresh').value,
+    HeThreshold:        +document.getElementById('cfg-HeThresh').value,
+    maxStarsPerSystem:  Math.max(1, +document.getElementById('cfg-maxStars').value|0),
+    minOrbitalDistance: +document.getElementById('cfg-minOrbit').value,
+    maxOrbitalDistance: +document.getElementById('cfg-maxOrbit').value,
+  };
+}
+
+document.getElementById('cfg-rotSpeed').addEventListener('input',e=>{
+  rotSpeed=parseFloat(e.target.value)||0;
+});
+
+document.getElementById('cfgToggle').addEventListener('click',()=>{
+  const body=document.getElementById('cfgBody'), open=body.classList.toggle('open');
+  document.getElementById('cfgToggle').textContent=open?'⚙ Generator Config ▴':'⚙ Generator Config ▾';
+});
+
+document.getElementById('regenBtn').addEventListener('click',()=>{
+  document.getElementById('regenBtn').disabled=true;
+  setTimeout(()=>document.getElementById('regenBtn').disabled=false,2000);
+  runGeneration(readCfg());
+});
+
+function runGeneration(cfg){
+  const ld=document.getElementById('loading'), det=document.getElementById('loading-detail');
+  ld.style.display='flex';
+  det.textContent='Seed: '+cfg.seed+' · Lattice: '+cfg.latticeResolution+'³';
+  // yield so the loading screen paints before the blocking computation
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    try {
+      const data=generateUniverse(cfg);
+      initViewer(data);
+      document.getElementById('info').innerHTML='Click a system to explore.';
+      document.getElementById('statsLine').textContent=
+        data.systems.length+' systems · '+data.stars.length+' stars · '+data.planets.length+' planets';
+    } catch(err) {
+      document.getElementById('info').innerHTML='<span style="color:#ff7043">Generation error: '+err.message+'</span>';
+      console.error(err);
+    }
+    ld.style.display='none';
+  }));
+}
+
+// initial generation
+runGeneration(readCfg());
+</script>
+</body>
+</html>
