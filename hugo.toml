@@ -69,6 +69,6 @@ title = "Mackenzie Trafford"
     weight = 20
 
   [[menu.main]]
-    name = "About"
+    name = "About Me"
     pageRef = "/about"
     weight = 30
